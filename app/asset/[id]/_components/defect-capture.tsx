@@ -16,6 +16,8 @@ import {
   selectPhotos,
 } from "../_lib/capture";
 import { resizePhoto } from "../_lib/resize-photo";
+import { appendTranscript } from "../_lib/speech";
+import { NotesField } from "./notes-field";
 
 export type CapturedPhoto = {
   id: number;
@@ -28,10 +30,10 @@ export type CapturedPhoto = {
   height: number;
 };
 
-// Defect capture (R7, R9, R10): up to 3 photos by file picker or drag and
-// drop, with a preview and remove button for each, and a notes box. Voice
-// dictation (milestone 5) will write into the same notes box. "Continue" leads
-// to the issue and work order form in milestone 4.
+// Defect capture (R7, R8, R9, R10): up to 3 photos by file picker or drag and
+// drop, with a preview and remove button for each, and a notes box that takes
+// typing and voice dictation. "Continue" leads to the issue and work order
+// form in milestone 4.
 export function DefectCapture() {
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [notes, setNotes] = useState("");
@@ -134,7 +136,7 @@ export function DefectCapture() {
         Report a defect
       </h2>
       <p className="mt-1 text-sm text-text-muted">
-        Add up to {MAX_PHOTOS} photos, type notes, or both.
+        Add up to {MAX_PHOTOS} photos, type or dictate notes, or both.
       </p>
 
       <form
@@ -244,22 +246,18 @@ export function DefectCapture() {
           )}
         </fieldset>
 
-        <div>
-          <label htmlFor={notesId} className="text-sm font-semibold">
-            Notes
-          </label>
-          <textarea
-            id={notesId}
-            value={notes}
-            onChange={(e) => {
-              setNotes(e.target.value);
-              if (e.target.value.trim()) setError("");
-            }}
-            rows={5}
-            placeholder="What did you see, hear or smell? Where on the machine? When did it start?"
-            className="mt-2 block w-full rounded-md border border-line bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:border-ink focus-visible:outline-2 focus-visible:outline-ink"
-          />
-        </div>
+        <NotesField
+          id={notesId}
+          value={notes}
+          onChange={(value) => {
+            setNotes(value);
+            if (value.trim()) setError("");
+          }}
+          onDictate={(words) => {
+            setNotes((current) => appendTranscript(current, words));
+            setError("");
+          }}
+        />
 
         {error && (
           <p id={errorId} role="alert" className="text-sm font-semibold text-status-down">
