@@ -1,26 +1,53 @@
 @import "tailwindcss";
 
+/*
+  Black and yellow theme (R30). All colours are defined here as tokens and used
+  through Tailwind utilities such as bg-surface, text-accent and border-line.
+  No Sitemate brand colours, typefaces or assets.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #0b0b0b;
+  --surface: #161616;
+  --surface-raised: #222222;
+  --line: #3a3a3a;
+  --text: #f5f5f0;
+  --text-muted: #a8a8a0;
+  --accent: #ffcc00;
+  --accent-strong: #ffd83d;
+  --accent-ink: #0b0b0b;
+
+  --status-ok: #4ade80;
+  --status-attention: #ffcc00;
+  --status-down: #f87171;
+
+  --severity-low: #a3e635;
+  --severity-medium: #facc15;
+  --severity-high: #fb923c;
+  --severity-critical: #f87171;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-ink: var(--accent-ink);
+  --color-status-ok: var(--status-ok);
+  --color-status-attention: var(--status-attention);
+  --color-status-down: var(--status-down);
+  --color-severity-low: var(--severity-low);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-high: var(--severity-high);
+  --color-severity-critical: var(--severity-critical);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ink);
+  color: var(--text);
 }
