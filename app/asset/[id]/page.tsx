@@ -6,10 +6,12 @@ import { getWorkOrderPhotos } from "@/db/work-orders";
 import { DefectCapture } from "./_components/defect-capture";
 import { HistoryTimeline } from "./_components/history-timeline";
 import { KeyFacts } from "./_components/key-facts";
+import { LinkedHistoryProvider } from "./_components/linked-history";
 
 // Asset profile (R5, R6) with defect capture (R7 to R10) and the issue and
-// work order form (R20 to R28) in the right-hand column. AI review joins it in
-// milestones 6 and 7. `params` and the
+// work order form (R20 to R28) in the right-hand column, which an AI draft
+// fills (milestones 6 and 7). A repeat finding in the draft highlights the
+// history entries it links to, beside the claim. `params` and the
 // database reads are request-time data under Cache Components, so they sit
 // inside a Suspense boundary.
 export default function AssetPage({ params }: PageProps<"/asset/[id]">) {
@@ -58,6 +60,9 @@ async function AssetProfile({
 
       {/* One column at tablet portrait; two on desktop, with facts and
           history on the left and defect capture on the right (plan section 7). */}
+      <LinkedHistoryProvider
+        entries={history.map(({ id, title, date }) => ({ id, title, date }))}
+      >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
         <div className="space-y-6">
           <KeyFacts asset={asset} />
@@ -67,6 +72,7 @@ async function AssetProfile({
           <DefectCapture assetId={asset.id} />
         </div>
       </div>
+      </LinkedHistoryProvider>
     </div>
   );
 }
