@@ -11,7 +11,7 @@ import {
   type FleetAsset,
   type FleetFilters,
 } from "../_lib/filter-fleet";
-import { AssetCard } from "./asset-card";
+import { AssetTable } from "./asset-table";
 import { statusLabels, type Status } from "./status-badge";
 
 const statuses = Object.keys(statusLabels) as Status[];
@@ -126,13 +126,7 @@ export function FleetBrowser({
       </div>
 
       {shown.length > 0 ? (
-        <ul aria-label="Assets" className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {shown.map((asset) => (
-            <li key={asset.id}>
-              <AssetCard asset={asset} />
-            </li>
-          ))}
-        </ul>
+        <AssetTable assets={shown} />
       ) : (
         <p className="rounded-lg border border-line bg-surface p-5 text-text-muted">
           No assets match these filters.

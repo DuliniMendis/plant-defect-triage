@@ -11,7 +11,7 @@ const fleet: FleetAsset[] = [
 ];
 
 const shownIds = () =>
-  within(screen.getByRole("list", { name: "Assets" }))
+  within(screen.getByRole("table", { name: "Assets" }))
     .getAllByRole("link")
     .map((link) => link.getAttribute("href"));
 
@@ -40,7 +40,7 @@ test("filters by type, site and status", async () => {
   await user.selectOptions(screen.getByRole("combobox", { name: "Status" }), "Operational");
   expect(shownIds()).toEqual(["/asset/TH-007"]);
   await user.selectOptions(screen.getByRole("combobox", { name: "Type" }), "Generator");
-  expect(screen.queryByRole("list", { name: "Assets" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("table", { name: "Assets" })).not.toBeInTheDocument();
   expect(screen.getByText("No assets match these filters.")).toBeInTheDocument();
 });
 

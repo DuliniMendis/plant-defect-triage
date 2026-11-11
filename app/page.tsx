@@ -56,12 +56,10 @@ function FleetSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading assets" className="space-y-4">
       <div className="h-16 animate-pulse rounded-md bg-surface-raised" />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
-          <div
-            key={i}
-            className="h-40 animate-pulse rounded-lg border border-line bg-surface"
-          />
+      <div className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+        <div className="h-10 bg-surface-raised" />
+        {Array.from({ length: 8 }, (_, i) => (
+          <div key={i} className="h-16 animate-pulse" />
         ))}
       </div>
     </div>
