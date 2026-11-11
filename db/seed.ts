@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { drizzle } from "drizzle-orm/neon-serverless";
+import { getPhotoStore } from "../lib/photo-store";
 import * as schema from "./schema";
 import { seedAssets, seedHistory } from "./seed-data";
 
@@ -11,8 +12,8 @@ import { seedAssets, seedHistory } from "./seed-data";
 // It connects directly rather than through db/client.ts, because that module
 // is marked server-only and cannot be imported from a plain Node script.
 //
-// Photo files in Vercel Blob are not removed yet; that arrives with photo
-// uploads in milestone 4.
+// Work order photos are removed from the photo store (Vercel Blob, or the
+// local stand-in) once the database reset has committed.
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
@@ -27,7 +28,12 @@ if (!url) {
 async function main(url: string) {
   const db = drizzle({ connection: url, schema });
   try {
+    let photoPaths: string[] = [];
     await db.transaction(async (tx) => {
+      const photos = await tx
+        .select({ blobPath: schema.workOrderPhotos.blobPath })
+        .from(schema.workOrderPhotos);
+      photoPaths = photos.map((p) => p.blobPath);
       await tx.delete(schema.assets);
       await tx.insert(schema.assets).values(seedAssets);
       await tx.insert(schema.historyEntries).values(seedHistory);
@@ -35,6 +41,10 @@ async function main(url: string) {
     console.log(
       `Seeded ${seedAssets.length} assets and ${seedHistory.length} history entries.`,
     );
+    if (photoPaths.length > 0) {
+      await getPhotoStore().delete(photoPaths);
+      console.log(`Removed ${photoPaths.length} work order photos.`);
+    }
   } finally {
     await db.$client.end();
   }

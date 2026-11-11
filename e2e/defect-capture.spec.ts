@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 
 // Next.js adds its own role="alert" route announcer, so look inside the panel.
 const panel = (page: Page) =>
-  page.getByRole("region", { name: /Report a defect|Defect report ready/ });
+  page.getByRole("region", { name: "Report a defect" });
 
 test("needs notes before continuing", async ({ page }) => {
   await page.getByRole("button", { name: "Continue" }).click();
@@ -25,7 +25,8 @@ test("needs notes before continuing", async ({ page }) => {
   await page.getByRole("textbox", { name: "Notes" }).fill("Oil under the boom");
   await expect(panel(page).getByRole("alert")).toBeHidden();
   await page.getByRole("button", { name: "Continue" }).click();
-  await expect(panel(page).getByRole("status")).toHaveText("Captured notes.");
+  await expect(page.getByRole("form", { name: "Issue and work order" })).toBeVisible();
+  await expect(page.getByText("Oil under the boom")).toBeVisible();
 });
 
 test("adds, previews, resizes and removes sample photos", async ({ page }) => {
@@ -63,9 +64,9 @@ test("adds, previews, resizes and removes sample photos", async ({ page }) => {
   await expect(panel(page).getByRole("alert")).toBeVisible();
   await page.getByRole("textbox", { name: "Notes" }).fill("Battery terminal corroded");
   await page.getByRole("button", { name: "Continue" }).click();
-  await expect(panel(page).getByRole("status")).toHaveText(
-    "Captured notes and 1 photo.",
-  );
+  await expect(
+    page.getByRole("list", { name: "Report photos" }).getByRole("img"),
+  ).toHaveCount(1);
 });
 
 test("stops at 3 photos", async ({ page }) => {

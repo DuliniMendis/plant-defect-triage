@@ -52,3 +52,56 @@ export type Issue = z.infer<typeof issueSchema>;
 export type RepeatCheck = z.infer<typeof repeatCheckSchema>;
 export type ProposedWorkOrder = z.infer<typeof proposedWorkOrderSchema>;
 export type TriageDraft = z.infer<typeof triageDraftSchema>;
+
+/**
+ * A draft with every field empty, for a work order entered by hand. The parts
+ * a person does not fill in (photo observations, repeat check, confidence,
+ * clarifying question) belong to the AI draft in milestone 6 and stay empty.
+ */
+export function blankDraft(): TriageDraft {
+  return {
+    issue: {
+      title: "",
+      description: "",
+      component: "",
+      severity: "medium",
+      severityReason: "",
+      safeToOperate: true,
+    },
+    photoObservations: [],
+    repeat: { isRepeat: false, relatedHistoryIds: [], summary: "" },
+    workOrder: {
+      title: "",
+      priority: "routine",
+      tasks: [],
+      parts: [],
+      estimatedHours: 0,
+      takeOutOfService: false,
+    },
+    // Confidence describes the AI's draft. A manual entry has none, so this is
+    // a placeholder that is never shown; `aiDraft` being empty is what marks a
+    // work order as manual.
+    confidence: "high",
+    clarifyingQuestion: null,
+  };
+}
+
+// The body of POST /api/work-orders, sent as the `payload` field of a
+// multipart form with the photos alongside (technical plan v2, section 5).
+// `aiDraft` and `model` are empty for a work order entered by hand.
+export const workOrderRequestSchema = z
+  .object({
+    assetId: z.string().min(1),
+    notes: z.string(),
+    aiDraft: triageDraftSchema.nullable(),
+    final: triageDraftSchema,
+    model: z.string().min(1).nullable(),
+  })
+  // An AI draft always comes with the model that wrote it, and a manual
+  // work order has neither (data model draft 2).
+  .refine((r) => (r.aiDraft === null) === (r.model === null), {
+    message: "An AI draft needs its model, and a manual entry has neither.",
+    path: ["model"],
+  });
+
+export type WorkOrderRequest = z.infer<typeof workOrderRequestSchema>;

@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getAsset, getAssetHistory } from "@/db/queries";
+import { getWorkOrderPhotos } from "@/db/work-orders";
 import { DefectCapture } from "./_components/defect-capture";
 import { HistoryTimeline } from "./_components/history-timeline";
 import { KeyFacts } from "./_components/key-facts";
 
-// Asset profile (R5, R6) with defect capture (R7 to R10) in the right-hand
-// column. Review joins it in milestones 4 to 7. `params` and the
+// Asset profile (R5, R6) with defect capture (R7 to R10) and the issue and
+// work order form (R20 to R28) in the right-hand column. AI review joins it in
+// milestones 6 and 7. `params` and the
 // database reads are request-time data under Cache Components, so they sit
 // inside a Suspense boundary.
 export default function AssetPage({ params }: PageProps<"/asset/[id]">) {
@@ -32,9 +34,10 @@ async function AssetProfile({
   params: PageProps<"/asset/[id]">["params"];
 }) {
   const { id } = await params;
-  const [asset, history] = await Promise.all([
+  const [asset, history, photos] = await Promise.all([
     getAsset(id),
     getAssetHistory(id),
+    getWorkOrderPhotos(id),
   ]);
 
   if (!asset) {
@@ -58,10 +61,10 @@ async function AssetProfile({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
         <div className="space-y-6">
           <KeyFacts asset={asset} />
-          <HistoryTimeline entries={history} />
+          <HistoryTimeline entries={history} photos={photos} />
         </div>
         <div className="max-lg:order-first lg:sticky lg:top-8">
-          <DefectCapture />
+          <DefectCapture assetId={asset.id} />
         </div>
       </div>
     </div>
