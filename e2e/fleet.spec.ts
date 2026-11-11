@@ -1,8 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { seedAssets } from "../db/seed-data";
+import { currentTempAssetIds, tempHistoryAsset } from "./support/temp-assets";
 
 // Needs a seeded database (`pnpm db:seed`). Runs at desktop and 768px widths.
-const total = seedAssets.length;
+// The list also holds this run's temporary assets for the write specs
+// (e2e/support/temp-assets.ts), which exist only while the tests run.
+const listed = [...seedAssets.map((a) => a.id), ...currentTempAssetIds()];
+const total = listed.length;
 const pageSize = 8;
 
 // Body rows of the asset table: the rows that link to an asset.
@@ -13,13 +17,13 @@ const rows = (page: Page) =>
     .filter({ has: page.getByRole("link") });
 const pager = (page: Page) => page.getByRole("navigation", { name: "Pagination" });
 
-test("the fleet page lists every seeded asset from the database, a page at a time", async ({
+test("the fleet page lists every asset in the database, a page at a time", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Fleet", level: 1 })).toBeVisible();
 
-  const sorted = seedAssets.map((a) => a.id).sort();
+  const sorted = listed.toSorted();
   const seen: string[] = [];
   const pageCount = Math.ceil(total / pageSize);
 
@@ -66,17 +70,21 @@ test("search, filters and page survive opening an asset and going back", async (
   await page.goto("/");
   await expect(rows(page)).toHaveCount(pageSize);
 
-  await page.getByRole("combobox", { name: "Site" }).selectOption("Westlink Civil Site");
+  // Filters on this run's temporary history asset, whose site and status
+  // nobody else changes (e2e/support/temp-assets.ts). The write specs, which
+  // change temporary assets, run after this file.
+  const asset = tempHistoryAsset();
+  await page.getByRole("combobox", { name: "Site" }).selectOption("E2E test site");
   await page.getByRole("combobox", { name: "Status" }).selectOption("Operational");
-  await page.getByRole("searchbox", { name: "Search" }).fill("jcb");
+  await page.getByRole("searchbox", { name: "Search" }).fill("history");
   await expect(rows(page)).toHaveCount(1);
-  await expect(rows(page).first()).toContainText("TH-007");
-  await expect(page).toHaveURL(/\?q=jcb&site=Westlink\+Civil\+Site&status=operational$/);
+  await expect(rows(page).first()).toContainText(asset.id);
+  await expect(page).toHaveURL(/\?q=history&site=E2E\+test\+site&status=operational$/);
 
   await rows(page).first().getByRole("link").click();
-  await expect(page).toHaveURL("/asset/TH-007");
+  await expect(page).toHaveURL(`/asset/${asset.id}`);
   await page.goBack();
-  await expect(page.getByRole("searchbox", { name: "Search" })).toHaveValue("jcb");
+  await expect(page.getByRole("searchbox", { name: "Search" })).toHaveValue("history");
   await expect(rows(page)).toHaveCount(1);
 
   await page.getByRole("button", { name: "Clear filters" }).click();
