@@ -1,8 +1,16 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { emptyFilters, type FleetAsset } from "../_lib/filter-fleet";
 import { FleetBrowser } from "./fleet-browser";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+// jsdom has no canvas to read images with, so every upload reads as an
+// unknown code.
+vi.mock("../_lib/qr-code", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../_lib/qr-code")>()),
+  lookUpQrFile: vi.fn(async () => ({ kind: "unknown", code: "ZZ-999" })),
+}));
 
 const fleet: FleetAsset[] = [
   { id: "EX-014", name: "20t Excavator", make: "Caterpillar", model: "320", category: "Excavator", site: "Riverside Quarry", status: "operational" },
@@ -91,4 +99,26 @@ describe("pagination", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Showing 1–7 of 7 matching (19 total)");
     expect(window.location.search).toBe("?type=Excavator");
   });
+});
+
+test("offers the QR code upload above the list", () => {
+  render(<FleetBrowser fleet={fleet} initialFilters={emptyFilters} />);
+  expect(screen.getByLabelText("Upload QR code")).toHaveAttribute("type", "file");
+});
+
+test("picking from the list after an unusable QR code clears the filters and focuses search", async () => {
+  const user = userEvent.setup();
+  render(<FleetBrowser fleet={fleet} initialFilters={{ ...emptyFilters, q: "generator" }} />);
+  expect(shownIds()).toEqual(["/asset/GN-003"]);
+
+  await user.upload(
+    screen.getByLabelText("Upload QR code"),
+    new File(["png"], "code.png", { type: "image/png" }),
+  );
+  expect(screen.getByRole("alert")).toHaveTextContent("No matching asset.");
+
+  await user.click(screen.getByRole("button", { name: "Pick from the list" }));
+  expect(shownIds()).toEqual(["/asset/EX-014", "/asset/GN-003", "/asset/TH-007"]);
+  expect(screen.getByRole("searchbox", { name: "Search" })).toHaveFocus();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });
