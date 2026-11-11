@@ -79,7 +79,7 @@ export function filterFleet<T extends FleetAsset>(
   });
 }
 
-/** Assets per page: two rows on desktop, four at tablet width. */
+/** Assets per page (R37). */
 export const pageSize = 8;
 
 /**
