@@ -16,10 +16,11 @@ import {
   MAX_PHOTOS,
   selectPhotos,
 } from "../_lib/capture";
-import { blankDraft, type TriageDraft } from "@/lib/schema";
+import { blankDraft, type TriageDraft, type TriageResponse } from "@/lib/schema";
+import { requestTriage } from "../_lib/request-triage";
 import { resizePhoto } from "../_lib/resize-photo";
 import { submitWorkOrder } from "../_lib/submit-work-order";
-import { blankValues, type FormValues } from "../_lib/work-order-form";
+import { blankValues, valuesFromDraft, type FormValues } from "../_lib/work-order-form";
 import { RequiredMark } from "./required-mark";
 import { WorkOrderForm } from "./work-order-form";
 
@@ -35,15 +36,19 @@ export type CapturedPhoto = {
 };
 
 type Step =
-  | { name: "capture"; message?: string }
+  | { name: "capture"; message?: string; draftError?: string }
+  | { name: "drafting" }
   | { name: "review" }
   | { name: "saved"; title: string };
 
 // Defect capture (R7, R9, R10): a required notes box and up to 3 optional
 // photos by file picker or drag and drop, with a preview and remove button
 // for each. Voice dictation (milestone 5) will write into the same notes box.
-// "Continue" opens the issue and work order form (R20); Approve saves it with
-// the photos (R21, R24 to R28) and Discard throws the whole report away.
+// "Draft with AI" sends the report for an AI draft that fills the issue and
+// work order form (R12 to R20); "Fill in by hand" opens the same form empty,
+// and is also the way on when the AI call fails (requirements section 7).
+// Approve saves it with the photos (R21, R24 to R28) and Discard throws the
+// whole report away.
 export function DefectCapture({ assetId }: { assetId: string }) {
   const router = useRouter();
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
@@ -54,9 +59,12 @@ export function DefectCapture({ assetId }: { assetId: string }) {
   const [error, setError] = useState("");
   const [step, setStep] = useState<Step>({ name: "capture" });
   const [values, setValues] = useState<FormValues>(blankValues);
-  // A manual entry starts from a blank draft. In milestone 6 this becomes the
-  // AI's draft, with its model, so the changed fields can be worked out.
-  const [base] = useState<TriageDraft>(blankDraft);
+  // The AI draft the form was filled from, if any. It is the base for the
+  // fields the form does not show, and is sent with the approved version so
+  // the server can record which fields the reviewer changed (R22, R28). A
+  // manual entry has none and starts from a blank draft.
+  const [ai, setAi] = useState<TriageResponse | null>(null);
+  const base: TriageDraft = ai?.draft ?? blankDraft();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
@@ -126,13 +134,37 @@ export function DefectCapture({ assetId }: { assetId: string }) {
     setPhotoMessage("");
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function checkNotes(): boolean {
     if (!canContinue(notes)) {
       setError("Type some notes about the defect before continuing.");
-      return;
+      return false;
     }
     setError("");
+    return true;
+  }
+
+  async function draftWithAi(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!checkNotes()) return;
+    setStep({ name: "drafting" });
+    const result = await requestTriage({
+      assetId,
+      notes: notes.trim(),
+      photos: photos.map((p) => p.blob),
+    });
+    if (!result.ok) {
+      setStep({ name: "capture", draftError: result.message });
+      return;
+    }
+    setAi(result.triage);
+    setValues(valuesFromDraft(result.triage.draft));
+    setStep({ name: "review" });
+  }
+
+  function fillByHand() {
+    if (!checkNotes()) return;
+    // Whatever is in the form is kept, but it is no longer an AI draft.
+    setAi(null);
     setStep({ name: "review" });
   }
 
@@ -143,6 +175,7 @@ export function DefectCapture({ assetId }: { assetId: string }) {
     setNotes("");
     setPhotoMessage("");
     setValues(blankValues());
+    setAi(null);
     setSaveError("");
     setStep(next);
   }
@@ -153,6 +186,8 @@ export function DefectCapture({ assetId }: { assetId: string }) {
     const result = await submitWorkOrder({
       assetId,
       notes: notes.trim(),
+      aiDraft: ai?.draft ?? null,
+      model: ai?.model ?? null,
       final,
       photos: photos.map((p) => p.blob),
     });
@@ -172,6 +207,7 @@ export function DefectCapture({ assetId }: { assetId: string }) {
         values={values}
         onChange={setValues}
         base={base}
+        ai={ai}
         photos={photos}
         notes={notes}
         saving={saving}
@@ -183,6 +219,10 @@ export function DefectCapture({ assetId }: { assetId: string }) {
         onEditReport={() => setStep({ name: "capture" })}
       />
     );
+  }
+
+  if (step.name === "drafting") {
+    return <Drafting />;
   }
 
   if (step.name === "saved") {
@@ -217,7 +257,7 @@ export function DefectCapture({ assetId }: { assetId: string }) {
 
       <form
         noValidate
-        onSubmit={handleSubmit}
+        onSubmit={(e) => void draftWithAi(e)}
         aria-describedby={error ? errorId : undefined}
         className="mt-4 space-y-5"
       >
@@ -365,13 +405,32 @@ export function DefectCapture({ assetId }: { assetId: string }) {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={busy || !hydrated}
-          className="rounded-md bg-ink px-4 py-2 font-semibold text-surface hover:bg-ink/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Continue
-        </button>
+        {step.draftError && (
+          <div role="alert" className="rounded-md border border-status-down bg-surface-raised px-3 py-2 text-sm">
+            <p className="font-semibold text-status-down">{step.draftError}</p>
+            <p className="mt-0.5 text-text-muted">
+              Your notes and photos are still here.
+            </p>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={busy || !hydrated}
+            className="min-h-11 rounded-md bg-ink px-4 py-2 font-semibold text-surface hover:bg-ink/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {step.draftError ? "Try the AI draft again" : "Draft with AI"}
+          </button>
+          <button
+            type="button"
+            onClick={fillByHand}
+            disabled={busy || !hydrated}
+            className="min-h-11 rounded-md border border-line bg-surface-raised px-4 py-2 font-semibold text-text hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Fill in by hand
+          </button>
+        </div>
       </form>
     </section>
   );
@@ -379,6 +438,28 @@ export function DefectCapture({ assetId }: { assetId: string }) {
 
 function noopSubscribe() {
   return () => {};
+}
+
+/** Shown while the AI draft is being made, which takes about 10 seconds. */
+function Drafting() {
+  return (
+    <section
+      aria-labelledby="drafting-heading"
+      aria-busy="true"
+      className="rounded-lg border border-line border-t-4 border-t-accent bg-surface p-5 shadow-sm"
+    >
+      <h2 id="drafting-heading" className="text-lg font-semibold">
+        Drafting with AI
+      </h2>
+      <p role="status" className="mt-2 text-sm">
+        Reading the notes, photos and the asset&apos;s history. This usually
+        takes about 10 seconds.
+      </p>
+      <div aria-hidden className="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-raised">
+        <div className="h-full w-1/3 animate-pulse rounded-full bg-accent" />
+      </div>
+    </section>
+  );
 }
 
 function WorkOrderSaved({

@@ -34,6 +34,18 @@ export async function workOrderIds(): Promise<Set<string>> {
   return new Set(rows.map((r) => r.id as string));
 }
 
+/** The asset's most recently approved work order, as stored. */
+export async function latestWorkOrder(assetId: string) {
+  const { rows } = await db().query(
+    `select ai_draft, final, changed_fields, model from work_orders
+      where asset_id = $1 order by approved_at desc limit 1`,
+    [assetId],
+  );
+  return rows[0] as
+    | { ai_draft: unknown; final: unknown; changed_fields: string[]; model: string | null }
+    | undefined;
+}
+
 /** Removes the asset's non-seed work orders and their photos, and sets its status back. */
 export async function removeWorkOrders(assetId: string, status: string) {
   const { rows } = await db().query(

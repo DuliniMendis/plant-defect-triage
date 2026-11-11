@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import type { TriageResponse } from "@/lib/schema";
 import { DefectCapture } from "./defect-capture";
 
 // jsdom cannot decode or draw images, so the resizer is replaced with one that
@@ -41,7 +42,7 @@ function setup() {
     user,
     photoInput: screen.getByLabelText("Add photos"),
     notes: screen.getByRole("textbox", { name: "Notes" }),
-    continueButton: screen.getByRole("button", { name: "Continue" }),
+    continueButton: screen.getByRole("button", { name: "Fill in by hand" }),
   };
 }
 
@@ -206,7 +207,7 @@ test("keeps what was typed in the form when going back to edit the report", asyn
   await user.type(screen.getByRole("textbox", { name: "Title" }), "Boom hose leak");
 
   await user.click(screen.getByRole("button", { name: "Edit report" }));
-  await user.click(screen.getByRole("button", { name: "Continue" }));
+  await user.click(screen.getByRole("button", { name: "Fill in by hand" }));
 
   expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Boom hose leak");
 });
@@ -316,4 +317,165 @@ test("discarding sends nothing and clears the report", async () => {
   expect(screen.getByRole("textbox", { name: "Notes" })).toHaveValue("");
   expect(screen.queryByRole("img")).not.toBeInTheDocument();
   expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-1");
+});
+
+// Milestone 6: the AI draft fills the form (R12 to R20, R22).
+
+const triage: TriageResponse = {
+  draft: {
+    issue: {
+      title: "Boom hose leak",
+      description: "Oil dripping at the boom fitting.",
+      component: "Boom hydraulics",
+      severity: "high",
+      severityReason: "Active hydraulic leak under load.",
+      safeToOperate: false,
+    },
+    photoObservations: ["Wet hose at the crimped fitting"],
+    repeat: { isRepeat: false, relatedHistoryIds: [], summary: "" },
+    workOrder: {
+      title: "Replace boom hose",
+      priority: "immediate",
+      tasks: ["Isolate the machine", "Replace hose"],
+      parts: ["Hose assembly"],
+      estimatedHours: 2.5,
+      takeOutOfService: true,
+    },
+    confidence: "medium",
+    clarifyingQuestion: "Is the leak from the hose or the fitting?",
+  },
+  model: "anthropic/claude-sonnet-5.5",
+  durationMs: 8400,
+  filled: [
+    {
+      path: "workOrder.priority",
+      source: "rule",
+      note: "Set to immediate because the asset is not safe to operate.",
+    },
+    {
+      path: "workOrder.estimatedHours",
+      source: "records",
+      note: "From the work order “Replace boom cylinder hose” approved 1 Nov 2026.",
+    },
+  ],
+};
+
+function triageThenSave() {
+  return vi.fn(async (url: string) =>
+    url === "/api/triage"
+      ? Response.json(triage)
+      : Response.json({ workOrderId: "wo-1" }, { status: 201 }),
+  );
+}
+
+test("drafting with AI fills the form, marks it as an AI draft and says where fields came from", async () => {
+  const fetchMock = triageThenSave();
+  vi.stubGlobal("fetch", fetchMock);
+  const { user, photoInput, notes } = setup();
+  await user.upload(photoInput, [jpeg("hose.jpg")]);
+  await screen.findByRole("img", { name: "Photo 1: hose.jpg" });
+  await user.type(notes, "Oil dripping from the boom hose");
+
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+
+  const form = await screen.findByRole("form", { name: "Issue and work order" });
+  expect(screen.getByRole("heading", { name: /Issue and work order/ })).toHaveTextContent(
+    "AI draft",
+  );
+  expect(within(form).getByRole("textbox", { name: "Title" })).toHaveValue("Boom hose leak");
+  expect(within(form).getByRole("radio", { name: "High" })).toBeChecked();
+  expect(within(form).getByRole("radio", { name: "Immediate" })).toBeChecked();
+  expect(within(form).getByRole("textbox", { name: /^Tasks/ })).toHaveValue(
+    "Isolate the machine\nReplace hose",
+  );
+  expect(within(form).getByRole("checkbox", { name: "Take the asset out of service" })).toBeChecked();
+  expect(form).toHaveTextContent(
+    "Set by ruleSet to immediate because the asset is not safe to operate.",
+  );
+  expect(form).toHaveTextContent("From records");
+
+  // What the AI saw is shown apart from the operator's notes (R15, R18).
+  const findings = screen.getByRole("region", { name: "AI findings" });
+  expect(findings).toHaveTextContent("Confidence: Medium");
+  expect(findings).toHaveTextContent("Is the leak from the hose or the fitting?");
+  expect(within(findings).getByRole("list", { name: "Seen in the photos" })).toHaveTextContent(
+    "Wet hose at the crimped fitting",
+  );
+
+  const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+  expect(url).toBe("/api/triage");
+  const body = init.body as FormData;
+  expect(body.get("assetId")).toBe("EX-014");
+  expect(body.get("notes")).toBe("Oil dripping from the boom hose");
+  expect(body.getAll("photos")).toHaveLength(1);
+});
+
+test("approving an edited AI draft sends both the AI draft and the approved version", async () => {
+  const fetchMock = triageThenSave();
+  vi.stubGlobal("fetch", fetchMock);
+  const { user, notes } = setup();
+  await user.type(notes, "Oil dripping from the boom hose");
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+
+  const form = await screen.findByRole("form", { name: "Issue and work order" });
+  await user.click(within(form).getByText("Critical", { exact: true }));
+  await user.click(screen.getByRole("button", { name: "Approve work order" }));
+  await screen.findByRole("heading", { name: "Work order saved" });
+
+  const [url, init] = fetchMock.mock.calls[1] as unknown as [string, RequestInit];
+  expect(url).toBe("/api/work-orders");
+  const payload = JSON.parse((init.body as FormData).get("payload") as string);
+  expect(payload.model).toBe("anthropic/claude-sonnet-5.5");
+  expect(payload.aiDraft).toEqual(triage.draft);
+  expect(payload.final.issue.severity).toBe("critical");
+  expect(payload.final.photoObservations).toEqual(triage.draft.photoObservations);
+});
+
+test("shows progress while drafting", async () => {
+  let respond: (r: Response) => void = () => {};
+  vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((r) => (respond = r))));
+  const { user, notes } = setup();
+  await user.type(notes, "Leak");
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+
+  expect(screen.getByRole("heading", { name: "Drafting with AI" })).toBeInTheDocument();
+  respond(Response.json(triage));
+  expect(await screen.findByRole("form", { name: "Issue and work order" })).toBeInTheDocument();
+});
+
+test("when the AI draft fails, the report is kept and it can be retried or filled in by hand", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      Response.json(
+        { error: "The AI draft could not be made. Try again, or fill in the form by hand." },
+        { status: 502 },
+      ),
+    ),
+  );
+  const { user, notes } = setup();
+  await user.type(notes, "Leak at boom");
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "The AI draft could not be made. Try again, or fill in the form by hand.",
+  );
+  expect(screen.getByRole("textbox", { name: "Notes" })).toHaveValue("Leak at boom");
+  expect(screen.getByRole("button", { name: "Try the AI draft again" })).toBeEnabled();
+
+  await user.click(screen.getByRole("button", { name: "Fill in by hand" }));
+  const form = screen.getByRole("form", { name: "Issue and work order" });
+  expect(within(form).getByRole("textbox", { name: "Title" })).toHaveValue("");
+  expect(screen.queryByText("AI draft")).not.toBeInTheDocument();
+});
+
+test("drafting with AI needs notes and sends nothing without them", async () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal("fetch", fetchMock);
+  const { user } = setup();
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Type some notes about the defect before continuing.",
+  );
+  expect(fetchMock).not.toHaveBeenCalled();
 });

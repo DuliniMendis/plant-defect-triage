@@ -15,6 +15,7 @@ Session: Claude Fable 5.2, medium effort, auto permission mode, 1M-token context
 | 5 | M3 defect capture built (new session, worktree) | Capture panel with photo picker, drag and drop, browser resize, notes and validation; unit, component and E2E tests | 177,909 | 18% | 21% |
 | 6 | M4 work order from issue built (new session, worktree off M3) | Issue and work order form, POST /api/work-orders with one transaction and photo clean-up, photo store (local stand-in until Blob is enabled), photo route, stand-in history list, data model draft 2; unit, component and E2E tests | 240,177 | 24% | 33% |
 | 7 | M8 QR code lookup (DUL-12, new session) | QR image script and 24 saved codes, "Upload QR code" on the fleet page with error messages, unit, component and E2E tests | 175,425 | 18% | 32% |
+| 8 | M6 AI fills the form (DUL-10, new session, worktree) | POST /api/triage with structured output through AI Gateway, prompt caching (system prompt and asset history), server fill of priority, out of service, parts and hours from rules and records; "Draft with AI" with progress, AI findings, retry and fill by hand; unit, component and E2E tests; live model checks | 297,984 | 30% | 42% |
 
 Breakdown at checkpoint 1: messages 92,768; system tools 17,575; MCP tools 16,632; system prompt 12,715; skills 9,964; MCP server instructions 1,261.
 
@@ -27,3 +28,5 @@ Checkpoint 5 is from a fourth session (Claude Opus 5.5, in a worktree for DUL-7)
 Checkpoint 6 is from a fifth session (Claude Opus 5.5, in a worktree for DUL-8 cut from the M3 branch), so its context count starts fresh. Its 5-hour figure is account-wide, so it includes other sessions running at the same time.
 
 Checkpoint 7 is from another session (Claude Opus 5.5, worktree for DUL-12). Its 5-hour figure is account-wide and includes other milestone sessions running at the same time.
+
+Checkpoint 8 is from another session (Claude Opus 5.5, worktree for DUL-10). Its 5-hour figure is account-wide. Three live triage calls were made to Claude Sonnet 5.5 through AI Gateway during this milestone; the second call of the pair read 3,076 prompt tokens from cache.

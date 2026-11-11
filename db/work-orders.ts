@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import type { TriageDraft } from "@/lib/schema";
 import { getDb } from "./client";
 import {
@@ -105,4 +105,19 @@ export async function getWorkOrderPhotoPath(
     .where(eq(workOrderPhotos.id, id))
     .limit(1);
   return row?.blobPath;
+}
+
+/**
+ * An asset's approved work orders, newest first. The triage route takes parts
+ * and estimated hours from the latest one on the same component rather than
+ * asking the model to guess them.
+ */
+export async function getPastWorkOrders(
+  assetId: string,
+): Promise<{ id: string; approvedAt: Date; final: TriageDraft }[]> {
+  return getDb()
+    .select({ id: workOrders.id, approvedAt: workOrders.approvedAt, final: workOrders.final })
+    .from(workOrders)
+    .where(eq(workOrders.assetId, assetId))
+    .orderBy(desc(workOrders.approvedAt));
 }
