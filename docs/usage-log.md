@@ -12,7 +12,8 @@ Session: Claude Fable 5.2, medium effort, auto permission mode, 1M-token context
 | 2 | Planning revised | Database change (requirements v3, plan v2), UML data model, decisions on fleet, styling, privacy and photos, photo search and three generated images | 207,228 | 21% | 6% |
 | 3 | Scaffolding set up (new session) | Dependency swap, database schema and first migration, theme, app shell, disclaimer footer, README, NOTICE, placeholder routes | 149,154 | 15% | 11% |
 | 4 | M1 Asset list (DUL-5, new session) | Seed script and data, fleet page, tests; Vercel project linked and Neon installed (Sydney); migration and seed run against Neon | 178,874 | 18% | 19% |
-| 5 | M8 QR code lookup (DUL-12, new session) | QR image script and 24 saved codes, "Upload QR code" on the fleet page with error messages, unit, component and E2E tests | 175,425 | 18% | 32% |
+| 5 | M3 defect capture built (new session, worktree) | Capture panel with photo picker, drag and drop, browser resize, notes and validation; unit, component and E2E tests | 177,909 | 18% | 21% |
+| 6 | M8 QR code lookup (DUL-12, new session) | QR image script and 24 saved codes, "Upload QR code" on the fleet page with error messages, unit, component and E2E tests | 175,425 | 18% | 32% |
 
 Breakdown at checkpoint 1: messages 92,768; system tools 17,575; MCP tools 16,632; system prompt 12,715; skills 9,964; MCP server instructions 1,261.
 
@@ -20,4 +21,6 @@ Checkpoint 3 is from a second session (Claude Opus 5.5), so its context count st
 
 Checkpoint 4 is from a third session (Claude Opus 5.5). Its 5-hour figure is account-wide, so it includes the M2 and M3 sessions running at the same time.
 
-Checkpoint 5 is from another session (Claude Opus 5.5, worktree for DUL-12). Its 5-hour figure is account-wide and includes other milestone sessions running at the same time.
+Checkpoint 5 is from a fourth session (Claude Opus 5.5, in a worktree for DUL-7), so its context count starts fresh. Its 5-hour figure is account-wide, so it includes the M1 and M2 sessions running at the same time.
+
+Checkpoint 6 is from another session (Claude Opus 5.5, worktree for DUL-12). Its 5-hour figure is account-wide and includes other milestone sessions running at the same time.
