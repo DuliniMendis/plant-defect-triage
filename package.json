@@ -15,7 +15,9 @@
     "qr:generate": "tsx scripts/make-qr.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "tsx scripts/run-e2e.ts",
+    "e2e:seed": "tsx scripts/e2e-temp-assets.ts seed",
+    "e2e:clean": "tsx scripts/e2e-temp-assets.ts clean",
     "eval": "tsx evals/run.mts"
   },
   "dependencies": {

@@ -5,6 +5,7 @@ import { useId, useRef, useState, type ReactNode } from "react";
 import {
   priorities,
   severities,
+  type Clarification,
   type Confidence,
   type FilledField,
   type Priority,
@@ -18,6 +19,8 @@ import {
   type FieldErrors,
   type FormValues,
 } from "../_lib/work-order-form";
+import { formatDate } from "../_lib/format";
+import { historyAnchor, useHighlightHistory, useLinkedHistory } from "./linked-history";
 import { RequiredMark } from "./required-mark";
 
 export type ReportPhoto = {
@@ -99,6 +102,8 @@ export function WorkOrderForm({
   ai = null,
   photos,
   notes,
+  clarifications = [],
+  onAnswer = () => {},
   saving,
   saveError,
   onApprove,
@@ -113,6 +118,10 @@ export function WorkOrderForm({
   ai?: TriageResponse | null;
   photos: readonly ReportPhoto[];
   notes: string;
+  /** The reviewer's earlier answers to the AI's questions about this report. */
+  clarifications?: readonly Clarification[];
+  /** Answers the AI's clarifying question and drafts again (R23). */
+  onAnswer?: (answer: string) => void;
   saving: boolean;
   /** Set when saving failed, so the reviewer is told (R27). */
   saveError: string;
@@ -189,9 +198,15 @@ export function WorkOrderForm({
         </span>
       </p>
 
-      <ReportSummary photos={photos} notes={notes} onEdit={onEditReport} disabled={saving} />
+      <ReportSummary
+        photos={photos}
+        notes={notes}
+        clarifications={clarifications}
+        onEdit={onEditReport}
+        disabled={saving}
+      />
 
-      {ai && <AiFindings ai={ai} />}
+      {ai && <AiFindings ai={ai} onAnswer={onAnswer} disabled={saving} />}
 
       <form
         ref={formRef}
@@ -394,11 +409,13 @@ export function WorkOrderForm({
 function ReportSummary({
   photos,
   notes,
+  clarifications,
   onEdit,
   disabled,
 }: {
   photos: readonly ReportPhoto[];
   notes: string;
+  clarifications: readonly Clarification[];
   onEdit: () => void;
   disabled: boolean;
 }) {
@@ -434,6 +451,17 @@ function ReportSummary({
       <p className="mt-2 text-sm whitespace-pre-line text-text-muted">
         {notes.trim() ? notes.trim() : "No notes."}
       </p>
+      {clarifications.length > 0 && (
+        <dl aria-label="Answers to the AI" className="mt-2 space-y-1.5 border-t border-line pt-2 text-sm">
+          {/* Answers are only ever added to the end, so the index is stable. */}
+          {clarifications.map((c, index) => (
+            <div key={index}>
+              <dt className="text-text-muted">The AI asked: {c.question}</dt>
+              <dd>Answer: {c.answer}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </div>
   );
 }
@@ -564,11 +592,20 @@ function FilledNote({ filled }: { filled: FilledField }) {
 }
 
 /**
- * What the AI found that has no form field: what it saw in the photos, kept
- * apart from the operator's notes (R15), its confidence, and any clarifying
- * question (R18).
+ * What the AI found that has no form field: any clarifying question, with a
+ * box to answer it and draft again (R18, R23), its confidence, the repeat
+ * check with links to the history it matches (R16), and what it saw in the
+ * photos, kept apart from the operator's notes (R15).
  */
-function AiFindings({ ai }: { ai: TriageResponse }) {
+function AiFindings({
+  ai,
+  onAnswer,
+  disabled,
+}: {
+  ai: TriageResponse;
+  onAnswer: (answer: string) => void;
+  disabled: boolean;
+}) {
   const { draft } = ai;
   return (
     <section
@@ -585,14 +622,15 @@ function AiFindings({ ai }: { ai: TriageResponse }) {
         </p>
       </div>
       {draft.clarifyingQuestion && (
-        <div className="mt-2 rounded border border-line bg-surface p-2">
-          <p className="font-semibold">The AI has a question</p>
-          <p className="mt-0.5">{draft.clarifyingQuestion}</p>
-          <p className="mt-1 text-xs text-text-muted">
-            Add the answer to the notes with Edit report, then draft again.
-          </p>
-        </div>
+        <ClarifyingQuestion
+          // A new question starts with an empty answer box.
+          key={draft.clarifyingQuestion}
+          question={draft.clarifyingQuestion}
+          onAnswer={onAnswer}
+          disabled={disabled}
+        />
       )}
+      <RepeatFinding repeat={draft.repeat} />
       <h4 className="mt-3 font-semibold">Seen in the photos</h4>
       {draft.photoObservations.length > 0 ? (
         <ul aria-label="Seen in the photos" className="mt-1 list-disc space-y-0.5 pl-5">
@@ -609,5 +647,123 @@ function AiFindings({ ai }: { ai: TriageResponse }) {
         Drafted by {ai.model} in {(ai.durationMs / 1000).toFixed(1)} s.
       </p>
     </section>
+  );
+}
+
+/**
+ * The AI's question when the notes and photos did not let it judge the
+ * defect. The draft below it is a low-confidence starting point; answering
+ * sends the answer with the same report for a fresh draft (R23).
+ */
+function ClarifyingQuestion({
+  question,
+  onAnswer,
+  disabled,
+}: {
+  question: string;
+  onAnswer: (answer: string) => void;
+  disabled: boolean;
+}) {
+  const [answer, setAnswer] = useState("");
+  const [missing, setMissing] = useState(false);
+  const uid = useId();
+  const answerId = `${uid}-answer`;
+  const errorId = `${uid}-answer-error`;
+
+  return (
+    <form
+      noValidate
+      aria-labelledby={`${uid}-heading`}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!answer.trim()) {
+          setMissing(true);
+          return;
+        }
+        onAnswer(answer.trim());
+      }}
+      className="mt-2 rounded border-2 border-ink bg-surface p-3"
+    >
+      <h4 id={`${uid}-heading`} className="font-semibold">
+        The AI has a question
+      </h4>
+      <p className="mt-1 text-base">{question}</p>
+      <p className="mt-1 text-xs text-text-muted">
+        The input was not clear enough to judge, so the draft below is only a
+        starting point. Answer to get a fresh draft; it replaces the form.
+      </p>
+      <label htmlFor={answerId} className="mt-3 block font-semibold">
+        Your answer <RequiredMark />
+      </label>
+      <textarea
+        id={answerId}
+        rows={2}
+        value={answer}
+        aria-required="true"
+        aria-invalid={missing || undefined}
+        aria-describedby={missing ? errorId : undefined}
+        onChange={(e) => {
+          setAnswer(e.target.value);
+          if (e.target.value.trim()) setMissing(false);
+        }}
+        className={inputClass}
+      />
+      {missing && (
+        <p id={errorId} role="alert" className="mt-1 text-sm text-status-down">
+          Type an answer before drafting again.
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={disabled}
+        className="mt-2 min-h-11 rounded-md bg-ink px-4 py-2 font-semibold text-surface hover:bg-ink/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        Answer and draft again
+      </button>
+    </form>
+  );
+}
+
+/**
+ * Whether the defect repeats earlier history, with links to the entries (R16).
+ * The server has already dropped any ID that is not a real entry for this
+ * asset. The linked entries are also highlighted in the history column.
+ */
+function RepeatFinding({ repeat }: { repeat: TriageDraft["repeat"] }) {
+  const { entries } = useLinkedHistory();
+  const ids = repeat.isRepeat ? repeat.relatedHistoryIds : [];
+  useHighlightHistory(ids);
+  const linked = ids.map((id) => ({ id, entry: entries.find((e) => e.id === id) }));
+
+  return (
+    <div className="mt-3">
+      <h4 className="font-semibold">Repeat check</h4>
+      {linked.length > 0 ? (
+        <div className="mt-1 rounded border border-line border-l-4 border-l-severity-high bg-surface p-2">
+          <p className="font-semibold">Repeats earlier history</p>
+          {repeat.summary && <p className="mt-0.5">{repeat.summary}</p>}
+          <ul aria-label="Related history" className="mt-1.5 space-y-1">
+            {linked.map(({ id, entry }) => (
+              <li key={id}>
+                <a
+                  href={`#${historyAnchor(id)}`}
+                  className="font-medium underline decoration-accent decoration-2 underline-offset-2 hover:decoration-ink focus-visible:outline-2 focus-visible:outline-ink"
+                >
+                  {entry ? entry.title : id}
+                </a>
+                {entry && (
+                  <span className="text-text-muted"> · {formatDate(entry.date)}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-xs text-text-muted">
+            Highlighted in the history.
+          </p>
+        </div>
+      ) : (
+        <p className="mt-1 text-text-muted">No match in this asset&apos;s history.</p>
+      )}
+    </div>
   );
 }

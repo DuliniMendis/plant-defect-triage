@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck, lint and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Generates the PageProps and LayoutProps route types that typecheck needs.
+      - run: pnpm exec next typegen
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The tests use the shared demo database. Two runs at once would each see
+    # the other's temporary assets in the fleet list, so E2E jobs queue.
+    concurrency:
+      group: e2e-shared-database
+      cancel-in-progress: false
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Without a Blob token, photos go to the local stand-in store on the
+      # runner (lib/photo-store.ts), so tests never write to Vercel Blob.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check the database secret is set
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Add the DATABASE_URL repository secret (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+      - run: pnpm exec playwright install --with-deps chromium
+
+      # Temporary assets for the write specs (e2e/support/temp-assets.ts). The
+      # run tag is written to e2e/.temp-run.json for the tests and clean-up.
+      - name: Seed temporary E2E assets
+        id: seed
+        run: pnpm e2e:seed
+
+      - name: Run end-to-end tests
+        run: pnpm exec playwright test
+
+      # Runs whether the tests passed, failed or were cancelled, and after a
+      # seed that failed part way, so the temporary assets never stay in the
+      # demo database. Skipped only when seeding never started (for example a
+      # failed install). It also removes any left by an earlier run that died
+      # before reaching this step.
+      - name: Remove temporary E2E assets
+        if: always() && steps.seed.outcome != 'skipped'
+        run: pnpm e2e:clean
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

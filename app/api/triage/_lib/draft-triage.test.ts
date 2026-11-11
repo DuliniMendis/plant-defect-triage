@@ -49,8 +49,9 @@ function mockModel(text: string) {
   });
 }
 
-const run = (model: MockLanguageModelV4) =>
+const run = (model: MockLanguageModelV4, clarifications: { question: string; answer: string }[] = []) =>
   draftTriage({
+    clarifications,
     model,
     asset,
     history,
@@ -106,4 +107,18 @@ test("a draft that fails the triage schema is reported as a failed draft", async
   await expect(run(mockModel(JSON.stringify(aiFill({ title: "  " }))))).rejects.toBeInstanceOf(
     TriageFailedError,
   );
+});
+
+test("a re-draft sends the reviewer's answer after the cached records, with the same notes and photos", async () => {
+  vi.spyOn(console, "info").mockImplementation(() => {});
+  const model = mockModel(JSON.stringify(aiFill()));
+  await run(model, [{ question: "Hose or fitting?", answer: "The fitting" }]);
+  const [, user] = model.doGenerateCalls[0].prompt;
+  if (user.role !== "user") throw new Error("expected a user message");
+  const [records, report, photo] = user.content;
+  expect(records).toMatchObject({ type: "text", providerOptions: { anthropic: {} } });
+  expect(report.providerOptions).toBeUndefined();
+  expect(report.type === "text" && report.text).toContain("Oil dripping from the boom hose");
+  expect(report.type === "text" && report.text).toContain("Q: Hose or fitting?\nA: The fitting");
+  expect(photo).toMatchObject({ type: "file" });
 });

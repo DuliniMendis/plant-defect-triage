@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+# run tag of the temporary E2E assets (pnpm e2e:seed)
+/e2e/.temp-run.json
 
 # next.js
 /.next/

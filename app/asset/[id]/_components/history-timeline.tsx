@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { HistoryEntry } from "@/db/schema";
 import { formatDate, formatHours, kindLabels } from "../_lib/format";
+import { HistoryItemFrame } from "./linked-history";
 import { WorkOrderPhotos } from "./work-order-photos";
 
 /** Photos for each work order, keyed by work order ID, from getWorkOrderPhotos. */
@@ -21,7 +22,8 @@ const severityStyles: Record<NonNullable<HistoryEntry["severity"]>, string> = {
 };
 
 // History timeline (R6). Entries arrive newest first from `getAssetHistory`;
-// this component keeps the order it is given.
+// this component keeps the order it is given. Entries an AI repeat finding
+// links to are highlighted by `HistoryItemFrame` (R16, M7).
 export function HistoryTimeline({
   entries,
   photos = {},
@@ -62,7 +64,7 @@ function HistoryItem({
   photos?: PhotosByWorkOrder[string];
 }) {
   return (
-    <li className="rounded-md border border-line bg-page p-4">
+    <HistoryItemFrame entryId={entry.id}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         <span
           className={`rounded-full border px-2 py-0.5 font-medium ${kindStyles[entry.kind]}`}
@@ -100,7 +102,7 @@ function HistoryItem({
         </dl>
       ) : null}
       {photos ? <WorkOrderPhotos photos={photos} title={entry.title} /> : null}
-    </li>
+    </HistoryItemFrame>
   );
 }
 

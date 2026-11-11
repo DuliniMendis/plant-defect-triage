@@ -1,5 +1,6 @@
 import type { ModelMessage, SystemModelMessage } from "ai";
 import type { Asset, HistoryEntry } from "@/db/schema";
+import type { Clarification } from "@/lib/schema";
 
 // Prompt for the triage draft (technical plan v2, section 6).
 //
@@ -30,13 +31,14 @@ An operator has reported a defect on one asset with notes and up to three photos
 You fill only the fields in the response schema. Priority and whether to take the asset out of service are set afterwards by fixed rules from your severity and safe-to-operate answers, so make those two answers carefully.
 
 Rules:
-1. Do not invent history. A repeat finding must point at real history entries for this asset, using their IDs exactly as written in the history (for example "EX-014-H4"). If nothing in the history matches, set isRepeat to false and leave relatedHistoryIds empty.
+1. Do not invent history. A repeat finding must point at real history entries for this asset, using their IDs exactly as written in the history (for example "EX-014-H4"). If nothing in the history matches, set isRepeat to false and leave relatedHistoryIds empty. Only report a repeat when the component and location of this defect are clear enough to match; if you are asking where or what the defect is, set isRepeat to false rather than guessing.
 2. Keep evidence apart. photoObservations lists only what can actually be seen in the photos. Do not repeat the operator's notes there. If there are no photos, return an empty list.
 3. Say when a photo is unclear, too dark, too far away, or does not show the reported defect. Put that in photoObservations, lower your confidence, and ask a clarifying question.
 4. Err toward higher severity when safety is involved: brakes, steering, hydraulics under load, lifting equipment, structural cracks, guarding, fuel or oil leaks near heat, electrical faults, tyres and wheels. When in doubt between two severities on a safety item, choose the higher one.
-5. Ask rather than guess. When the notes and photos do not let you judge the defect, or they contradict each other, set confidence to low and ask one short clarifying question the operator can answer. Otherwise clarifyingQuestion is null.
+5. Ask rather than guess. When the notes and photos do not let you judge the defect, or they contradict each other, set confidence to low and ask one short clarifying question the operator can answer. Ask something the operator can answer in words; do not ask for another photo. Otherwise clarifyingQuestion is null.
 6. Use the asset's own words. When the defect is on a component already named in the history, reuse that component name exactly, so the defect can be matched with earlier work.
-7. Write for a technician. Plain, specific language. No marketing words, no apologies, no mention of being an AI.
+7. Use the answers. When the user message includes answers to questions you asked earlier about this report, treat them as part of the operator's account, and do not ask the same question again. Once the answers settle what and where the defect is, judge from them even if a photo is still unclear: say in photoObservations that the photo does not confirm it, use medium confidence, and set clarifyingQuestion to null. Ask a new question only if the answers still leave the defect unclear.
+8. Write for a technician. Plain, specific language. No marketing words, no apologies, no mention of being an AI.
 
 Severity scale:
 - low: cosmetic or minor wear; no effect on safety or operation. Example: a cracked mirror housing, a worn seat cover.
@@ -98,17 +100,48 @@ export function assetContext(asset: Asset, history: readonly HistoryEntry[]): st
 
 export type PromptPhoto = { data: Uint8Array; mediaType: string };
 
-/** The user message: cached asset context, then this report's notes and photos. */
+
+/** The operator's notes, any answers to the AI's questions, and a photo count. */
+export function reportText(
+  notes: string,
+  clarifications: readonly Clarification[],
+  photoCount: number,
+): string {
+  const parts = [`Operator's notes:\n${notes.trim()}`];
+  if (clarifications.length > 0) {
+    parts.push(
+      [
+        "Answers to your earlier questions about this report:",
+        ...clarifications.map((c) => `Q: ${c.question}\nA: ${c.answer}`),
+      ].join("\n"),
+    );
+  }
+  parts.push(
+    photoCount === 0
+      ? "No photos were attached."
+      : `${photoCount} ${photoCount === 1 ? "photo follows" : "photos follow"}.`,
+  );
+  return parts.join("\n\n");
+}
+
+/**
+ * The user message: cached asset context, then this report's notes, any
+ * answers to the AI's questions, and the photos. A re-draft after an answer
+ * sends the same inputs again with the answers added (technical plan section
+ * 6), so it still reads the asset context from the cache.
+ */
 export function triageMessages({
   asset,
   history,
   notes,
   photos,
+  clarifications = [],
 }: {
   asset: Asset;
   history: readonly HistoryEntry[];
   notes: string;
   photos: readonly PromptPhoto[];
+  clarifications?: readonly Clarification[];
 }): ModelMessage[] {
   return [
     {
@@ -121,11 +154,7 @@ export function triageMessages({
         },
         {
           type: "text",
-          text: `Operator's notes:\n${notes.trim()}\n\n${
-            photos.length === 0
-              ? "No photos were attached."
-              : `${photos.length} ${photos.length === 1 ? "photo follows" : "photos follow"}.`
-          }`,
+          text: reportText(notes, clarifications, photos.length),
         },
         ...photos.map((photo) => ({
           type: "file" as const,

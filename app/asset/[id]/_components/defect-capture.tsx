@@ -16,7 +16,12 @@ import {
   MAX_PHOTOS,
   selectPhotos,
 } from "../_lib/capture";
-import { blankDraft, type TriageDraft, type TriageResponse } from "@/lib/schema";
+import {
+  blankDraft,
+  type Clarification,
+  type TriageDraft,
+  type TriageResponse,
+} from "@/lib/schema";
 import { requestTriage } from "../_lib/request-triage";
 import { resizePhoto } from "../_lib/resize-photo";
 import { submitWorkOrder } from "../_lib/submit-work-order";
@@ -37,7 +42,7 @@ export type CapturedPhoto = {
 
 type Step =
   | { name: "capture"; message?: string; draftError?: string }
-  | { name: "drafting" }
+  | { name: "drafting"; answered: boolean }
   | { name: "review" }
   | { name: "saved"; title: string };
 
@@ -47,6 +52,8 @@ type Step =
 // "Draft with AI" sends the report for an AI draft that fills the issue and
 // work order form (R12 to R20); "Fill in by hand" opens the same form empty,
 // and is also the way on when the AI call fails (requirements section 7).
+// When the AI asks a clarifying question, the reviewer's answer is sent back
+// with the same notes and photos for a fresh draft (R18, R23).
 // Approve saves it with the photos (R21, R24 to R28) and Discard throws the
 // whole report away.
 export function DefectCapture({ assetId }: { assetId: string }) {
@@ -67,6 +74,9 @@ export function DefectCapture({ assetId }: { assetId: string }) {
   const base: TriageDraft = ai?.draft ?? blankDraft();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  // The reviewer's answers to the AI's questions about this report, oldest
+  // first. Sent with every draft of the report until it is saved or discarded.
+  const [clarifications, setClarifications] = useState<Clarification[]>([]);
 
   const nextId = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -146,11 +156,25 @@ export function DefectCapture({ assetId }: { assetId: string }) {
   async function draftWithAi(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!checkNotes()) return;
-    setStep({ name: "drafting" });
+    await runDraft(clarifications);
+  }
+
+  /** Answers the AI's question and drafts again with the answer (R23). */
+  async function answerQuestion(answer: string) {
+    const question = ai?.draft.clarifyingQuestion;
+    if (!question) return;
+    const next = [...clarifications, { question, answer }];
+    setClarifications(next);
+    await runDraft(next);
+  }
+
+  async function runDraft(answers: readonly Clarification[]) {
+    setStep({ name: "drafting", answered: answers.length > 0 });
     const result = await requestTriage({
       assetId,
       notes: notes.trim(),
       photos: photos.map((p) => p.blob),
+      clarifications: answers,
     });
     if (!result.ok) {
       setStep({ name: "capture", draftError: result.message });
@@ -176,6 +200,7 @@ export function DefectCapture({ assetId }: { assetId: string }) {
     setPhotoMessage("");
     setValues(blankValues());
     setAi(null);
+    setClarifications([]);
     setSaveError("");
     setStep(next);
   }
@@ -210,6 +235,8 @@ export function DefectCapture({ assetId }: { assetId: string }) {
         ai={ai}
         photos={photos}
         notes={notes}
+        clarifications={clarifications}
+        onAnswer={(answer) => void answerQuestion(answer)}
         saving={saving}
         saveError={saveError}
         onApprove={(draft) => void approve(draft)}
@@ -222,7 +249,7 @@ export function DefectCapture({ assetId }: { assetId: string }) {
   }
 
   if (step.name === "drafting") {
-    return <Drafting />;
+    return <Drafting answered={step.answered} />;
   }
 
   if (step.name === "saved") {
@@ -441,7 +468,7 @@ function noopSubscribe() {
 }
 
 /** Shown while the AI draft is being made, which takes about 10 seconds. */
-function Drafting() {
+function Drafting({ answered }: { answered: boolean }) {
   return (
     <section
       aria-labelledby="drafting-heading"
@@ -452,8 +479,10 @@ function Drafting() {
         Drafting with AI
       </h2>
       <p role="status" className="mt-2 text-sm">
-        Reading the notes, photos and the asset&apos;s history. This usually
-        takes about 10 seconds.
+        {answered
+          ? "Drafting again with your answer, the notes, photos and the asset's history."
+          : "Reading the notes, photos and the asset's history."}{" "}
+        This usually takes about 10 seconds.
       </p>
       <div aria-hidden className="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-raised">
         <div className="h-full w-1/3 animate-pulse rounded-full bg-accent" />

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { TriageResponse } from "../lib/schema";
 import { assetStatus, latestWorkOrder, removeWorkOrders } from "./support/db";
+import { tempAssetFor } from "./support/temp-assets";
 
 // AI fills the form, then manual edit (M6: R12 to R15, R17 to R20, R22, R28).
 //
@@ -8,8 +9,9 @@ import { assetStatus, latestWorkOrder, removeWorkOrders } from "./support/db";
 // test is fast, free and always gives the same draft. The real model call is
 // covered by the route's unit tests and a live check. Approval goes to the real
 // POST /api/work-orders, so what is stored is checked for real. Each browser
-// project uses its own filler asset, and the test removes what it created.
-const assetFor = (project: string) => (project.startsWith("tablet") ? "RL-010" : "WL-011");
+// project uses its own temporary asset made for this run
+// (e2e/support/temp-assets.ts), and the test removes what it created.
+const assetFor = (project: string) => tempAssetFor("AI", project);
 
 const draft: TriageResponse = {
   draft: {

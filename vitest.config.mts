@@ -12,7 +12,8 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     include: ["**/*.test.{ts,tsx}"],
     // `.claude/` holds git worktrees for other branches, each with its own
-    // node_modules.
-    exclude: ["**/node_modules/**", "**/.next/**", "e2e/**", ".claude/**"],
+    // node_modules. Playwright specs in e2e/ are `*.spec.ts` and not matched;
+    // helpers in e2e/support/ can have unit tests.
+    exclude: ["**/node_modules/**", "**/.next/**", "e2e/*.spec.ts", ".claude/**"],
   },
 });

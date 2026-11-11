@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Asset, HistoryEntry } from "@/db/schema";
-import { assetContext, SYSTEM_PROMPT } from "./prompt";
+import { assetContext, reportText, SYSTEM_PROMPT } from "./prompt";
 
 const asset = {
   id: "GN-003",
@@ -57,4 +57,17 @@ test("the system prompt is long enough to be cached", () => {
   expect(SYSTEM_PROMPT.length).toBeGreaterThan(3000);
   // Nothing that changes between requests, such as today's date.
   expect(SYSTEM_PROMPT).not.toMatch(/\b20\d\d-\d\d-\d\d\b/);
+});
+
+test("the report text adds the reviewer's answers after the notes", () => {
+  expect(
+    reportText("Oil on the boom", [{ question: "Hose or fitting?", answer: "The fitting" }], 1),
+  ).toBe(
+    [
+      "Operator's notes:\nOil on the boom",
+      "Answers to your earlier questions about this report:\nQ: Hose or fitting?\nA: The fitting",
+      "1 photo follows.",
+    ].join("\n\n"),
+  );
+  expect(reportText(" Oil ", [], 0)).toBe("Operator's notes:\nOil\n\nNo photos were attached.");
 });

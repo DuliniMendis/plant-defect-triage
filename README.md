@@ -82,7 +82,8 @@ pnpm dev
 | `pnpm typecheck` | TypeScript check |
 | `pnpm test` | Unit and component tests (Vitest, React Testing Library) |
 | `pnpm test:watch` | The same, re-running on changes |
-| `pnpm test:e2e` | End-to-end tests (Playwright, Chromium). First run: `pnpm exec playwright install chromium` |
+| `pnpm test:e2e` | End-to-end tests (Playwright, Chromium). Seeds temporary `E2E-` assets for the tests that save data, runs Playwright (extra arguments are passed on), then removes them, pass or fail. First run: `pnpm exec playwright install chromium` |
+| `pnpm e2e:seed` / `pnpm e2e:clean` | Add or remove the temporary E2E assets by hand. `e2e:clean` also removes any left by a run that died more than 6 hours ago |
 | `pnpm db:generate` | Generate a migration from `db/schema.ts` |
 | `pnpm db:migrate` | Apply migrations to the database |
 | `pnpm db:seed` | Restore the demo fleet and its history to the starting state; removes any approved work orders. Safe to run between takes |
