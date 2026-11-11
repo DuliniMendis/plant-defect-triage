@@ -4,9 +4,9 @@ import { FleetBrowser } from "./_components/fleet-browser";
 import { filtersFromParams, pageFromParams } from "./_lib/filter-fleet";
 import { listFleet } from "./_lib/fleet";
 
-// Fleet screen (R1, R4): every asset, with a search box, filters by type,
-// site and status, and pages of eight. The QR code upload (R2) arrives in
-// milestone 8.
+// Fleet screen (R1, R2, R4): an "Upload QR code" control that opens the asset
+// in a saved QR code image, then every asset, with a search box, filters by
+// type, site and status, and pages of eight.
 export default function FleetPage({ searchParams }: PageProps<"/">) {
   return (
     <section aria-labelledby="fleet-heading" className="space-y-6">
@@ -15,7 +15,8 @@ export default function FleetPage({ searchParams }: PageProps<"/">) {
           Fleet
         </h1>
         <p className="text-text-muted">
-          Pick an asset to see its history or report a defect.
+          Upload an asset&apos;s QR code, or pick it from the list, to see its
+          history or report a defect.
         </p>
       </div>
       <Suspense fallback={<FleetSkeleton />}>

@@ -12,6 +12,7 @@ import {
   type FleetFilters,
 } from "../_lib/filter-fleet";
 import { AssetTable } from "./asset-table";
+import { QrUpload } from "./qr-upload";
 import { statusLabels, type Status } from "@/components/status-badge";
 
 const statuses = Object.keys(statusLabels) as Status[];
@@ -19,9 +20,10 @@ const statuses = Object.keys(statusLabels) as Status[];
 const fieldClass =
   "h-10 w-full rounded-md border border-line bg-surface px-3 text-sm text-text shadow-sm focus-visible:border-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink";
 
-// Search box, filters and pages over the fleet (R1, R4). Filtering and paging
-// happen in the browser so results update as the user types; both are mirrored
-// into the URL so going back from an asset profile restores them.
+// QR code upload (R2), then a search box, filters and pages over the fleet
+// (R1, R4). Filtering and paging happen in the browser so results update as the
+// user types; both are mirrored into the URL so going back from an asset
+// profile restores them.
 export function FleetBrowser({
   fleet,
   initialFilters,
@@ -34,6 +36,7 @@ export function FleetBrowser({
   const [filters, setFilters] = useState(initialFilters);
   const [requestedPage, setRequestedPage] = useState(initialPage);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const id = useId();
 
   const types = optionsFor(fleet, "category");
@@ -62,6 +65,12 @@ export function FleetBrowser({
     if (top < 0) resultsRef.current?.scrollIntoView({ block: "start" });
   }
 
+  // Offered when a QR code can't be used: show the whole list, ready to search.
+  function pickFromList() {
+    update(emptyFilters);
+    searchRef.current?.focus();
+  }
+
   function set(key: keyof FleetFilters) {
     return (
       event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -69,73 +78,77 @@ export function FleetBrowser({
   }
 
   return (
-    <div ref={resultsRef} className="scroll-mt-4 space-y-4">
-      <div role="search" aria-label="Filter assets" className="grid gap-3 md:grid-cols-3 lg:grid-cols-[2fr_1fr_1fr_1fr]">
-        <div className="space-y-1 md:col-span-3 lg:col-span-1">
-          <label htmlFor={`${id}-q`} className="text-sm font-medium">
-            Search
-          </label>
-          <input
-            id={`${id}-q`}
-            type="search"
-            value={filters.q}
-            onChange={set("q")}
-            placeholder="ID, name, make, model or site"
-            autoComplete="off"
-            className={fieldClass}
-          />
+    <div className="space-y-4">
+      <QrUpload knownIds={fleet.map((asset) => asset.id)} onPickFromList={pickFromList} />
+      <div ref={resultsRef} className="scroll-mt-4 space-y-4">
+        <div role="search" aria-label="Filter assets" className="grid gap-3 md:grid-cols-3 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+          <div className="space-y-1 md:col-span-3 lg:col-span-1">
+            <label htmlFor={`${id}-q`} className="text-sm font-medium">
+              Search
+            </label>
+            <input
+              ref={searchRef}
+              id={`${id}-q`}
+              type="search"
+              value={filters.q}
+              onChange={set("q")}
+              placeholder="ID, name, make, model or site"
+              autoComplete="off"
+              className={fieldClass}
+            />
+          </div>
+          <FilterSelect id={`${id}-type`} label="Type" value={filters.type} onChange={set("type")}>
+            {types.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </FilterSelect>
+          <FilterSelect id={`${id}-site`} label="Site" value={filters.site} onChange={set("site")}>
+            {sites.map((site) => (
+              <option key={site} value={site}>
+                {site}
+              </option>
+            ))}
+          </FilterSelect>
+          <FilterSelect id={`${id}-status`} label="Status" value={filters.status} onChange={set("status")}>
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {statusLabels[status]}
+              </option>
+            ))}
+          </FilterSelect>
         </div>
-        <FilterSelect id={`${id}-type`} label="Type" value={filters.type} onChange={set("type")}>
-          {types.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect id={`${id}-site`} label="Site" value={filters.site} onChange={set("site")}>
-          {sites.map((site) => (
-            <option key={site} value={site}>
-              {site}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect id={`${id}-status`} label="Status" value={filters.status} onChange={set("status")}>
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {statusLabels[status]}
-            </option>
-          ))}
-        </FilterSelect>
-      </div>
 
-      <div className="flex min-h-8 items-center justify-between gap-3 text-sm">
-        <p role="status" className="text-text-muted">
-          {matches.length === 0
-            ? `No matches among ${fleet.length} assets`
-            : `Showing ${from}–${to} of ${matches.length}${filtered ? ` matching (${fleet.length} total)` : " assets"}`}
-        </p>
-        {filtered ? (
-          <button
-            type="button"
-            onClick={() => update(emptyFilters)}
-            className="rounded-md px-2 py-1 font-medium underline decoration-accent decoration-2 underline-offset-4 hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-ink"
-          >
-            Clear filters
-          </button>
+        <div className="flex min-h-8 items-center justify-between gap-3 text-sm">
+          <p role="status" className="text-text-muted">
+            {matches.length === 0
+              ? `No matches among ${fleet.length} assets`
+              : `Showing ${from}–${to} of ${matches.length}${filtered ? ` matching (${fleet.length} total)` : " assets"}`}
+          </p>
+          {filtered ? (
+            <button
+              type="button"
+              onClick={() => update(emptyFilters)}
+              className="rounded-md px-2 py-1 font-medium underline decoration-accent decoration-2 underline-offset-4 hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-ink"
+            >
+              Clear filters
+            </button>
+          ) : null}
+        </div>
+
+        {shown.length > 0 ? (
+          <AssetTable assets={shown} />
+        ) : (
+          <p className="rounded-lg border border-line bg-surface p-5 text-text-muted">
+            No assets match these filters.
+          </p>
+        )}
+
+        {pageCount > 1 ? (
+          <Pagination page={page} pageCount={pageCount} onChange={goToPage} />
         ) : null}
       </div>
-
-      {shown.length > 0 ? (
-        <AssetTable assets={shown} />
-      ) : (
-        <p className="rounded-lg border border-line bg-surface p-5 text-text-muted">
-          No assets match these filters.
-        </p>
-      )}
-
-      {pageCount > 1 ? (
-        <Pagination page={page} pageCount={pageCount} onChange={goToPage} />
-      ) : null}
     </div>
   );
 }
