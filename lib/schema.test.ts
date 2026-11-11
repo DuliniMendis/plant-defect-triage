@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { triageDraftSchema, type TriageDraft } from "./schema";
+import {
+  blankDraft,
+  triageDraftSchema,
+  workOrderRequestSchema,
+  type TriageDraft,
+} from "./schema";
 
 const validDraft: TriageDraft = {
   issue: {
@@ -44,4 +49,53 @@ describe("triageDraftSchema", () => {
     };
     expect(triageDraftSchema.safeParse(draft).success).toBe(false);
   });
+});
+
+describe("workOrderRequestSchema", () => {
+  test("accepts a manual work order with no AI draft or model", () => {
+    const request = {
+      assetId: "EX-014",
+      notes: "",
+      aiDraft: null,
+      final: validDraft,
+      model: null,
+    };
+    expect(workOrderRequestSchema.safeParse(request).success).toBe(true);
+  });
+
+  test("needs the model with an AI draft, and neither for a manual entry", () => {
+    const base = { assetId: "EX-014", notes: "", final: validDraft };
+    expect(
+      workOrderRequestSchema.safeParse({ ...base, aiDraft: validDraft, model: null }).success,
+    ).toBe(false);
+    expect(
+      workOrderRequestSchema.safeParse({ ...base, aiDraft: null, model: "anthropic/claude-sonnet-5.5" })
+        .success,
+    ).toBe(false);
+    expect(
+      workOrderRequestSchema.safeParse({
+        ...base,
+        aiDraft: validDraft,
+        model: "anthropic/claude-sonnet-5.5",
+      }).success,
+    ).toBe(true);
+  });
+
+  test("rejects a final draft with no work order title", () => {
+    const request = {
+      assetId: "EX-014",
+      notes: "",
+      aiDraft: null,
+      final: { ...validDraft, workOrder: { ...validDraft.workOrder, title: "" } },
+      model: null,
+    };
+    expect(workOrderRequestSchema.safeParse(request).success).toBe(false);
+  });
+});
+
+test("blankDraft is a valid draft once the titles are filled in", () => {
+  const draft = blankDraft();
+  draft.issue.title = "Leak";
+  draft.workOrder.title = "Fix leak";
+  expect(triageDraftSchema.safeParse(draft).success).toBe(true);
 });

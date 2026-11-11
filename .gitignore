@@ -48,3 +48,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# local stand-in for Vercel Blob photo storage (lib/photo-store.ts)
+/.data/
