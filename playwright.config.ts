@@ -18,6 +18,8 @@ const writes = /\.writes\.spec\.ts$/;
 
 export default defineConfig({
   testDir: "./e2e",
+  // Only specs; e2e/support/ also holds Vitest unit tests (`*.test.ts`).
+  testMatch: /\.spec\.ts$/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -44,6 +46,8 @@ export default defineConfig({
       dependencies: ["desktop-chrome", "tablet-chrome"],
     },
   ],
+  // The write specs use temporary assets that `pnpm test:e2e` (or the CI
+  // steps) seed before the run and remove after it, pass or fail.
   webServer: {
     command: `pnpm dev --port ${port}`,
     url: baseURL,
