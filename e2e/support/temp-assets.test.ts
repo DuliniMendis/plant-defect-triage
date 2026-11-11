@@ -38,6 +38,6 @@ test("clean-up removes this run's assets and those of dead runs, and nothing els
 test("temporary assets never share an ID with the demo fleet", () => {
   const seeded = new Set(seedAssets.map((a) => a.id));
   const ids = tempAssets(newRunTag(now)).map((a) => a.id);
-  expect(new Set(ids).size).toBe(4);
+  expect(new Set(ids).size).toBe(5);
   expect(ids.some((id) => seeded.has(id))).toBe(false);
 });

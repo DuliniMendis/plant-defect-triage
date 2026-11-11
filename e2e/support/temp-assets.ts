@@ -18,8 +18,12 @@ export const TEMP_PREFIX = "E2E-";
 /** Temporary assets older than this are left over from a run that died. */
 export const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
 
-/** One temporary asset per write spec and browser project. */
-export const tempSlots = ["WO-D", "WO-T", "AI-D", "AI-T"] as const;
+/**
+ * One temporary asset per write spec and browser project, and one with a
+ * known history for the read-only specs (HIST), so they do not depend on the
+ * state of the shared demo fleet.
+ */
+export const tempSlots = ["WO-D", "WO-T", "AI-D", "AI-T", "HIST"] as const;
 export type TempSlot = (typeof tempSlots)[number];
 
 /** Where `pnpm e2e:seed` records the current run's tag for the tests and clean-up. */
@@ -62,7 +66,7 @@ export function shouldRemove(
 export function tempAssets(tag: string) {
   return tempSlots.map((slot) => ({
     id: tempAssetId(tag, slot),
-    name: `E2E test asset ${slot}`,
+    name: slot === "HIST" ? "E2E history asset" : `E2E test asset ${slot}`,
     make: "Test",
     model: "E2E",
     category: "Test asset",
@@ -99,9 +103,13 @@ export function tempAssetFor(spec: "WO" | "AI", project: string): string {
   return tempAssetId(tag!, slot);
 }
 
-/** One closed service entry per temporary asset. */
+/**
+ * History for the temporary assets. Each write-spec asset has one closed
+ * service. The HIST asset has a mix of kinds, inserted out of date order, so a
+ * test can check the page sorts it newest first.
+ */
 export function tempHistory(tag: string) {
-  return tempSlots.map((slot) => ({
+  const service = (slot: TempSlot) => ({
     id: `${tempAssetId(tag, slot)}-H1`,
     assetId: tempAssetId(tag, slot),
     date: "2026-08-01",
@@ -110,5 +118,29 @@ export function tempHistory(tag: string) {
     detail: "Temporary asset for end-to-end tests.",
     meterHours: 950,
     status: "closed" as const,
-  }));
+  });
+  const hist = tempAssetId(tag, "HIST");
+  const entry = (n: number, e: Omit<ReturnType<typeof service>, "id" | "assetId" | "kind" | "status"> & {
+    kind: "issue" | "repair" | "schedule-check";
+    status: "open" | "closed";
+  }) => ({ id: `${hist}-H${n}`, assetId: hist, ...e });
+  return [
+    ...tempSlots.filter((slot) => slot !== "HIST").map(service),
+    entry(1, { date: "2026-05-21", kind: "repair", title: "Replaced drive belt", detail: "", meterHours: 820, status: "closed" }),
+    entry(2, { date: "2026-11-02", kind: "issue", title: "Squeal from the engine bay", detail: "", meterHours: 990, status: "open" }),
+    entry(3, { date: "2026-03-10", kind: "issue", title: "Belt slipping on start-up", detail: "", meterHours: 760, status: "closed" }),
+    entry(4, { date: "2026-08-01", kind: "schedule-check", title: "Scheduled service", detail: "", meterHours: 950, status: "closed" }),
+  ];
+}
+
+/** The read-only specs' temporary asset, with its history. */
+export function tempHistoryAsset() {
+  const tag = currentRunTag();
+  if (!tag) currentTempAssetIds(); // throws the explanation
+  const id = tempAssetId(tag!, "HIST");
+  return {
+    id,
+    name: "E2E history asset",
+    history: tempHistory(tag!).filter((h) => h.assetId === id),
+  };
 }
