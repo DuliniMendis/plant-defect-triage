@@ -12,7 +12,7 @@ See [NOTICE.md](NOTICE.md) for what this repository does and does not contain.
 
 | Document | Contents |
 |---|---|
-| [Requirements, version 3](docs/requirements-v3.md) | What the demo must do |
+| [Requirements, version 4](docs/requirements-v4.md) | What the demo must do |
 | [Technical plan, version 2](docs/technical-plan-v2.md) | How it is built |
 | [Data model](docs/data-model.md) | Tables and the triage draft |
 | [Milestones](docs/milestones.md) | Build order |

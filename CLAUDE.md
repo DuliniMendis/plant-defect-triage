@@ -2,7 +2,7 @@
 
 # Project conventions
 
-Plant Defect Triage, a concept demo for a job interview. Requirements and plans are in `docs/` (latest: `requirements-v3.md`, `technical-plan-v2.md`, `data-model.md`, `milestones.md`).
+Plant Defect Triage, a concept demo for a job interview. Requirements and plans are in `docs/` (latest: `requirements-v4.md`, `technical-plan-v2.md`, `data-model.md`, `milestones.md`).
 
 ## Where components go
 
