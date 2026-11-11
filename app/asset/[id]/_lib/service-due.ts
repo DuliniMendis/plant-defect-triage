@@ -1,10 +1,11 @@
 import { formatHours } from "./format";
 
 /**
- * Hours between scheduled services, used as the full scale of the service
- * gauge. The data model stores only the meter reading the next service is due
- * at, not each asset's interval; the seeded fleet services on 250 and 500 hour
- * marks, so 500 h is the common interval.
+ * Typical hours between scheduled services. The colour of the service gauge
+ * comes from the hours left as a share of this interval. The data model stores
+ * only the meter reading the next service is due at, not each asset's
+ * interval; the seeded fleet services on 250 and 500 hour marks, so 500 h is
+ * the common interval.
  */
 export const SERVICE_INTERVAL_HOURS = 500;
 
@@ -15,20 +16,24 @@ export type ServiceDue = {
   /** "At 4,500 h (285 h to go)", "Due now at 4,500 h", "Overdue by 120 h (due at 4,500 h)" */
   text: string;
   overdue: boolean;
-  /** Hours left before the service, never below 0 or above the interval. */
+  /** Hours left before the service, never below 0. */
   hoursLeft: number;
-  /** Share of the interval left, from 0 to 1. */
-  fraction: number;
+  /**
+   * How far the meter has run towards the due reading, from 0 (no hours) to
+   * 1 (due or overdue). The gauge fills up as the service gets closer.
+   */
+  progress: number;
   level: ServiceLevel;
 };
 
-// Thresholds on the share of the interval left: more than half is good, a
-// quarter to a half is fair, a tenth to a quarter is low, and a tenth or less
-// (or overdue) is due.
-function levelFor(fraction: number): ServiceLevel {
-  if (fraction > 0.5) return "good";
-  if (fraction > 0.25) return "fair";
-  if (fraction > 0.1) return "low";
+// Thresholds on the hours left as a share of the interval: more than half is
+// good, a quarter to a half is fair, a tenth to a quarter is low, and a tenth
+// or less (or overdue) is due.
+function levelFor(hoursLeft: number): ServiceLevel {
+  const share = hoursLeft / SERVICE_INTERVAL_HOURS;
+  if (share > 0.5) return "good";
+  if (share > 0.25) return "fair";
+  if (share > 0.1) return "low";
   return "due";
 }
 
@@ -39,8 +44,11 @@ export function describeServiceDue(
 ): ServiceDue {
   const remaining = nextServiceDueHours - meterHours;
   const dueAt = formatHours(nextServiceDueHours);
-  const hoursLeft = Math.min(Math.max(remaining, 0), SERVICE_INTERVAL_HOURS);
-  const fraction = hoursLeft / SERVICE_INTERVAL_HOURS;
+  const hoursLeft = Math.max(remaining, 0);
+  const progress =
+    nextServiceDueHours > 0
+      ? Math.min(Math.max(meterHours / nextServiceDueHours, 0), 1)
+      : 1;
 
   let text: string;
   if (remaining > 0) {
@@ -55,7 +63,7 @@ export function describeServiceDue(
     text,
     overdue: remaining <= 0,
     hoursLeft,
-    fraction,
-    level: levelFor(fraction),
+    progress,
+    level: levelFor(hoursLeft),
   };
 }

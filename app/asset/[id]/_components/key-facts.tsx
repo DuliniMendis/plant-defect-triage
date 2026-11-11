@@ -28,7 +28,11 @@ export function KeyFacts({ asset }: { asset: Asset }) {
           >
             {serviceDue.text}
           </p>
-          <ServiceGauge serviceDue={serviceDue} />
+          <ServiceGauge
+            meterHours={asset.meterHours}
+            nextServiceDueHours={asset.nextServiceDueHours}
+            serviceDue={serviceDue}
+          />
         </div>
       ),
     },

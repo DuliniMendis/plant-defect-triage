@@ -55,8 +55,8 @@ test("shows an asset's key facts", async ({ page }) => {
   await expect(facts).toContainText("Riverside Quarry");
   await expect(facts).toContainText("At 7,000 h (158 h to go)");
   await expect(
-    facts.getByRole("meter", { name: "Hours left before the next service" }),
-  ).toHaveAttribute("aria-valuenow", "158");
+    facts.getByRole("meter", { name: "Progress to the next service" }),
+  ).toHaveAttribute("aria-valuetext", "97%, 158 h to go");
 });
 
 test("offers the Report a defect entry point", async ({ page }) => {

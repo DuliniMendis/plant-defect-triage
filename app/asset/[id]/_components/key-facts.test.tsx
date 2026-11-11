@@ -37,10 +37,11 @@ test("shows make, model, site, meter hours, next service due and status", () => 
 test("shows a gauge of the hours left before the service", () => {
   render(<KeyFacts asset={excavator} />);
   const gauge = screen.getByRole("meter", {
-    name: "Hours left before the next service",
+    name: "Progress to the next service",
   });
   expect(factValue("Next service due")).toContainElement(gauge);
-  expect(gauge).toHaveAttribute("aria-valuenow", "250");
+  expect(gauge).toHaveAttribute("aria-valuenow", "4250");
+  expect(gauge).toHaveAttribute("aria-valuemax", "4500");
 });
 
 test("says when the service is overdue", () => {
