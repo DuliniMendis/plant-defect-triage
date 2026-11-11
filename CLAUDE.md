@@ -2,7 +2,7 @@
 
 # Project conventions
 
-Plant Defect Triage, a concept demo for a job interview. Requirements and plans are in `docs/` (latest: `requirements-v3.md`, `technical-plan-v2.md`, `data-model.md`, `milestones.md`).
+Plant Defect Triage, a concept demo for a job interview. Requirements and plans are in `docs/` (latest: `requirements-v4.md`, `technical-plan-v2.md`, `data-model.md`, `milestones.md`).
 
 ## Where components go
 
@@ -10,6 +10,15 @@ Plant Defect Triage, a concept demo for a job interview. Requirements and plans 
 - Only components shared by two or more routes go in the top-level `components/` folder.
 - When a route-local component becomes needed by a second route, move it to `components/`.
 - Route-only helpers follow the same rule (`_lib/` in the route folder); shared ones go in `lib/`.
+
+## Theme
+
+Light theme with black and yellow as accents (decided 11 Nov 2026; replaces the earlier all-dark theme). Colours are tokens in `app/globals.css`; use them through Tailwind utilities, never raw hex values in components.
+
+- Page and cards are light: `bg-page`, `bg-surface`, `bg-surface-raised`, `border-line`, `text-text`, `text-text-muted`.
+- Black (`ink`) is for strong accents: the header bar, primary buttons, focus outlines. Muted text on black is `text-ink-muted`.
+- Yellow (`accent`) is for fills, bars, borders and highlights. Never use yellow as text on a light background (`text-accent` is only for text on `bg-ink`). Text on a yellow fill is `text-accent-ink`.
+- Status and severity colours are always paired with a text label, never colour alone.
 
 ## Next.js and React best practices
 

@@ -20,7 +20,7 @@ async function AssetProfile({
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">
-        Asset <span className="font-mono text-accent">{id}</span>
+        Asset <span className="rounded bg-accent px-1.5 font-mono text-accent-ink">{id}</span>
       </h1>
       <p className="text-text-muted">Asset profile coming in milestone 2.</p>
     </section>
