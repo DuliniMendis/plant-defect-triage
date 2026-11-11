@@ -1,7 +1,12 @@
-import { triageResponseSchema, type TriageResponse } from "@/lib/schema";
+import {
+  triageResponseSchema,
+  type Clarification,
+  type TriageResponse,
+} from "@/lib/schema";
 
 // Asks POST /api/triage for an AI draft of the issue and work order, sending
-// the notes and photos as multipart form data (technical plan v2, section 5).
+// the notes and photos as multipart form data (technical plan v2, section 5),
+// with the reviewer's answers to any clarifying questions (R23).
 
 export type TriageResult =
   | { ok: true; triage: TriageResponse }
@@ -14,10 +19,12 @@ export async function requestTriage({
   assetId,
   notes,
   photos,
+  clarifications = [],
 }: {
   assetId: string;
   notes: string;
   photos: readonly Blob[];
+  clarifications?: readonly Clarification[];
 }): Promise<TriageResult> {
   const body = new FormData();
   body.set("assetId", assetId);
@@ -25,6 +32,10 @@ export async function requestTriage({
   photos.forEach((photo, index) => {
     body.append("photos", photo, `photo-${index + 1}.jpg`);
   });
+  for (const { question, answer } of clarifications) {
+    body.append("question", question);
+    body.append("answer", answer);
+  }
 
   let response: Response;
   try {

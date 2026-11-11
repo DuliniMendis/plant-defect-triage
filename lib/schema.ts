@@ -128,3 +128,10 @@ export const triageResponseSchema = z.object({
   filled: z.array(filledFieldSchema),
 });
 export type TriageResponse = z.infer<typeof triageResponseSchema>;
+
+/**
+ * A clarifying question the AI asked about a report, and the reviewer's
+ * answer. Sent back with the original notes and photos for a fresh draft
+ * (R23, technical plan section 6).
+ */
+export type Clarification = { question: string; answer: string };

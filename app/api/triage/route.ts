@@ -5,7 +5,9 @@ import { parseTriageForm } from "./_lib/parse-triage-form";
 
 // POST /api/triage: an AI draft of the issue and work order from the operator's
 // notes and photos (technical plan v2, section 5). Multipart body: `assetId`,
-// `notes`, and up to 3 `photos`. The asset and its history are loaded here, not
+// `notes`, up to 3 `photos`, and
+// matching `question` and `answer` fields when the reviewer has answered the
+// AI's clarifying questions (R23). The asset and its history are loaded here, not
 // sent by the browser, so the model cannot be fed invented history.
 //
 // Writes nothing. The reviewer edits the draft and approves it through
@@ -40,6 +42,7 @@ export async function POST(request: Request) {
       pastWorkOrders,
       notes: parsed.notes,
       photos: parsed.photos,
+      clarifications: parsed.clarifications,
     });
     return Response.json(result);
   } catch (cause) {

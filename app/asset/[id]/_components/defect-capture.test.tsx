@@ -1,8 +1,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import type { HistoryEntry } from "@/db/schema";
 import type { TriageResponse } from "@/lib/schema";
 import { DefectCapture } from "./defect-capture";
+import { HistoryTimeline } from "./history-timeline";
+import { LinkedHistoryProvider } from "./linked-history";
 
 // jsdom cannot decode or draw images, so the resizer is replaced with one that
 // returns the file as is.
@@ -479,3 +482,141 @@ test("drafting with AI needs notes and sends nothing without them", async () => 
   );
   expect(fetchMock).not.toHaveBeenCalled();
 });
+
+// Milestone 7: the repeat check (R16) and the clarifying question (R18, R23).
+
+function draftWith(overrides: Partial<TriageResponse["draft"]>): TriageResponse {
+  return { ...triage, draft: { ...triage.draft, ...overrides } };
+}
+
+test("answering the AI's question drafts again with the answer and the same report", async () => {
+  const redraft = draftWith({
+    issue: { ...triage.draft.issue, title: "Boom hose fitting leak" },
+    confidence: "high",
+    clarifyingQuestion: null,
+  });
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(Response.json(triage))
+    .mockResolvedValueOnce(Response.json(redraft));
+  vi.stubGlobal("fetch", fetchMock);
+  const { user, photoInput, notes } = setup();
+  await user.upload(photoInput, [jpeg("hose.jpg")]);
+  await screen.findByRole("img", { name: "Photo 1: hose.jpg" });
+  await user.type(notes, "Oil on the boom");
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+
+  const question = await screen.findByRole("form", { name: "The AI has a question" });
+  expect(question).toHaveTextContent("Is the leak from the hose or the fitting?");
+  await user.type(
+    within(question).getByRole("textbox", { name: "Your answer" }),
+    "The crimped fitting",
+  );
+  await user.click(within(question).getByRole("button", { name: "Answer and draft again" }));
+
+  const form = await screen.findByRole("form", { name: "Issue and work order" });
+  expect(within(form).getByRole("textbox", { name: "Title" })).toHaveValue(
+    "Boom hose fitting leak",
+  );
+  expect(screen.queryByRole("form", { name: "The AI has a question" })).not.toBeInTheDocument();
+  expect(screen.getByRole("definition")).toHaveTextContent("Answer: The crimped fitting");
+
+  const body = (fetchMock.mock.calls[1] as [string, RequestInit])[1].body as FormData;
+  expect(body.get("notes")).toBe("Oil on the boom");
+  expect(body.getAll("photos")).toHaveLength(1);
+  expect(body.getAll("question")).toEqual(["Is the leak from the hose or the fitting?"]);
+  expect(body.getAll("answer")).toEqual(["The crimped fitting"]);
+});
+
+test("the AI's question needs an answer before drafting again", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(Response.json(triage));
+  vi.stubGlobal("fetch", fetchMock);
+  const { user, notes } = setup();
+  await user.type(notes, "Oil on the boom");
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+
+  const question = await screen.findByRole("form", { name: "The AI has a question" });
+  await user.click(within(question).getByRole("button", { name: "Answer and draft again" }));
+
+  expect(within(question).getByRole("alert")).toHaveTextContent(
+    "Type an answer before drafting again.",
+  );
+  expect(within(question).getByRole("textbox", { name: "Your answer" })).toBeInvalid();
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+test("a repeat finding links to the history entries and highlights them until the draft is discarded", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      Response.json(
+        draftWith({
+          repeat: {
+            isRepeat: true,
+            relatedHistoryIds: ["EX-014-H1", "EX-014-H4"],
+            summary: "Third leak at the same boom fitting this year.",
+          },
+        }),
+      ),
+    ),
+  );
+  const history = [
+    historyEntry("EX-014-H4", "Hose leak at boom fitting, second occurrence", "2026-08-27"),
+    historyEntry("EX-014-H3", "6,500-hour service", "2026-06-02"),
+    historyEntry("EX-014-H1", "Hydraulic oil weeping at boom cylinder hose", "2026-03-18"),
+  ];
+  const user = userEvent.setup();
+  render(
+    <LinkedHistoryProvider entries={history}>
+      <HistoryTimeline entries={history} />
+      <DefectCapture assetId="EX-014" />
+    </LinkedHistoryProvider>,
+  );
+  await user.type(screen.getByRole("textbox", { name: "Notes" }), "Oil on the boom");
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+
+  const findings = await screen.findByRole("region", { name: "AI findings" });
+  expect(findings).toHaveTextContent("Repeats earlier history");
+  expect(findings).toHaveTextContent("Third leak at the same boom fitting this year.");
+  const links = within(findings).getAllByRole("link");
+  expect(links.map((l) => [l.textContent, l.getAttribute("href")])).toEqual([
+    ["Hydraulic oil weeping at boom cylinder hose", "#history-EX-014-H1"],
+    ["Hose leak at boom fitting, second occurrence", "#history-EX-014-H4"],
+  ]);
+
+  const items = within(screen.getByRole("list", { name: "History" })).getAllByRole("listitem");
+  const marked = items.map((i) => i.textContent?.includes("Linked by the AI repeat check"));
+  expect(marked).toEqual([true, false, true]);
+  expect(items[0]).toHaveAttribute("id", "history-EX-014-H4");
+
+  await user.click(screen.getByRole("button", { name: "Discard" }));
+  expect(screen.queryByText("Linked by the AI repeat check")).not.toBeInTheDocument();
+});
+
+test("a draft that is not a repeat says so and highlights nothing", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(triage)));
+  const { user, notes } = setup();
+  await user.type(notes, "Oil on the boom");
+  await user.click(screen.getByRole("button", { name: "Draft with AI" }));
+
+  const findings = await screen.findByRole("region", { name: "AI findings" });
+  expect(findings).toHaveTextContent("No match in this asset's history.");
+  expect(within(findings).queryByRole("link")).not.toBeInTheDocument();
+});
+
+function historyEntry(id: string, title: string, date: string): HistoryEntry {
+  return {
+    id,
+    assetId: "EX-014",
+    date,
+    kind: "issue",
+    title,
+    detail: "",
+    component: null,
+    severity: null,
+    meterHours: null,
+    status: "closed",
+    seeded: true,
+    workOrderId: null,
+  };
+}

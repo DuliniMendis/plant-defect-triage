@@ -43,3 +43,34 @@ test("refuses files that are not images", async () => {
   const result = await parseTriageForm(form({ assetId: "EX-014", notes: "Leak" }, [pdf]));
   expect(result).toEqual({ ok: false, message: "Photos must be JPEG, PNG or WebP images." });
 });
+
+test("reads the reviewer's answers to the AI's questions, in order", async () => {
+  const data = form({ assetId: "EX-014", notes: "Leak" });
+  data.append("question", " Hose or fitting? ");
+  data.append("answer", " The fitting ");
+  data.append("question", "Is it dripping or weeping?");
+  data.append("answer", "Dripping");
+  const result = await parseTriageForm(data);
+  expect(result.ok && result.clarifications).toEqual([
+    { question: "Hose or fitting?", answer: "The fitting" },
+    { question: "Is it dripping or weeping?", answer: "Dripping" },
+  ]);
+});
+
+test("has no answers on a first draft", async () => {
+  const result = await parseTriageForm(form({ assetId: "EX-014", notes: "Leak" }));
+  expect(result.ok && result.clarifications).toEqual([]);
+});
+
+test("needs an answer for every question", async () => {
+  const data = form({ assetId: "EX-014", notes: "Leak", question: "Hose or fitting?" });
+  expect(await parseTriageForm(data)).toEqual({
+    ok: false,
+    message: "Each clarifying question needs an answer.",
+  });
+  data.set("answer", "  ");
+  expect(await parseTriageForm(data)).toEqual({
+    ok: false,
+    message: "Type an answer to the AI's question before drafting again.",
+  });
+});

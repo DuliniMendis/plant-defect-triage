@@ -1,9 +1,17 @@
 import { generateText, Output, type LanguageModel } from "ai";
 import type { Asset, HistoryEntry } from "@/db/schema";
-import { triageDraftSchema, type TriageResponse } from "@/lib/schema";
+import {
+  triageDraftSchema,
+  type Clarification,
+  type TriageResponse,
+} from "@/lib/schema";
 import { aiFillSchema } from "./ai-fill";
 import { fillFromRecords, type PastWorkOrder } from "./fill-from-records";
-import { systemMessage, triageMessages, type PromptPhoto } from "./prompt";
+import {
+  systemMessage,
+  triageMessages,
+  type PromptPhoto,
+} from "./prompt";
 
 export const DEFAULT_MODEL = "anthropic/claude-sonnet-5.5";
 
@@ -21,6 +29,7 @@ export async function draftTriage({
   pastWorkOrders,
   notes,
   photos,
+  clarifications = [],
   now = () => performance.now(),
 }: {
   /** A Gateway model ID such as "anthropic/claude-sonnet-5.5", or a model instance in tests. */
@@ -30,6 +39,8 @@ export async function draftTriage({
   pastWorkOrders: readonly PastWorkOrder[];
   notes: string;
   photos: readonly PromptPhoto[];
+  /** The reviewer's answers to the AI's earlier questions (R23). */
+  clarifications?: readonly Clarification[];
   now?: () => number;
 }): Promise<TriageResponse> {
   const started = now();
@@ -39,7 +50,7 @@ export async function draftTriage({
     result = await generateText({
       model,
       instructions: systemMessage,
-      messages: triageMessages({ asset, history, notes, photos }),
+      messages: triageMessages({ asset, history, notes, photos, clarifications }),
       output: Output.object({ schema: aiFillSchema }),
       // Low reasoning keeps a draft near the 10-second target (requirements
       // section 7). Step 8 of the plan compares quality at this setting.
