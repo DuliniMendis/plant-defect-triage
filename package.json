@@ -15,7 +15,8 @@
     "qr:generate": "tsx scripts/make-qr.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "eval": "tsx evals/run.mts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
@@ -46,6 +47,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "jsdom": "^31.0.0",
+    "sharp": "0.35.5",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5",

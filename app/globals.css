@@ -3,7 +3,7 @@
 /*
   Light theme with black and yellow accents (R30). All colours are defined here
   as tokens and used through Tailwind utilities such as bg-surface, bg-accent
-  and border-line. No Sitemate brand colours, typefaces or assets.
+  and border-line. Original colours; no third-party brand assets.
 
   Yellow is too light to read as text on a light background. Use it only for
   fills, bars and borders, or as text on black (bg-ink). Text on a yellow fill

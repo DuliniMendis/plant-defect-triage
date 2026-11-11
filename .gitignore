@@ -51,3 +51,6 @@ next-env.d.ts
 
 # local stand-in for Vercel Blob photo storage (lib/photo-store.ts)
 /.data/
+
+# eval reports (pnpm eval)
+/evals/results/
