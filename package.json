@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx db/seed.ts",
     "db:studio": "drizzle-kit studio",
+    "qr:generate": "tsx scripts/make-qr.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"

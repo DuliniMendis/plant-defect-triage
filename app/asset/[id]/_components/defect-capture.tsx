@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   useEffect,
   useId,
@@ -15,9 +16,14 @@ import {
   MAX_PHOTOS,
   selectPhotos,
 } from "../_lib/capture";
+import { blankDraft, type TriageDraft } from "@/lib/schema";
 import { resizePhoto } from "../_lib/resize-photo";
 import { appendTranscript } from "../_lib/speech";
+import { submitWorkOrder } from "../_lib/submit-work-order";
+import { blankValues, type FormValues } from "../_lib/work-order-form";
 import { NotesField } from "./notes-field";
+import { RequiredMark } from "./required-mark";
+import { WorkOrderForm } from "./work-order-form";
 
 export type CapturedPhoto = {
   id: number;
@@ -30,18 +36,31 @@ export type CapturedPhoto = {
   height: number;
 };
 
-// Defect capture (R7, R8, R9, R10): up to 3 photos by file picker or drag and
-// drop, with a preview and remove button for each, and a notes box that takes
-// typing and voice dictation. "Continue" leads to the issue and work order
-// form in milestone 4.
-export function DefectCapture() {
+type Step =
+  | { name: "capture"; message?: string }
+  | { name: "review" }
+  | { name: "saved"; title: string };
+
+// Defect capture (R7, R8, R9, R10): a required notes box that takes typing
+// and voice dictation, and up to 3 optional photos by file picker or drag and
+// drop, with a preview and remove button for each.
+// "Continue" opens the issue and work order form (R20); Approve saves it with
+// the photos (R21, R24 to R28) and Discard throws the whole report away.
+export function DefectCapture({ assetId }: { assetId: string }) {
+  const router = useRouter();
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [photoMessage, setPhotoMessage] = useState("");
   const [error, setError] = useState("");
-  const [ready, setReady] = useState(false);
+  const [step, setStep] = useState<Step>({ name: "capture" });
+  const [values, setValues] = useState<FormValues>(blankValues);
+  // A manual entry starts from a blank draft. In milestone 6 this becomes the
+  // AI's draft, with its model, so the changed fields can be worked out.
+  const [base] = useState<TriageDraft>(blankDraft);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const nextId = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -68,6 +87,9 @@ export function DefectCapture() {
     () => false,
   );
   const photosLocked = full || busy || !hydrated;
+  // Set when Continue is pressed without notes; cleared as soon as some are
+  // typed. Turns the Notes title and box red.
+  const missing = error !== "";
 
   async function addFiles(files: readonly File[]) {
     if (busy || files.length === 0) return;
@@ -95,7 +117,6 @@ export function DefectCapture() {
 
     if (added.length > 0) {
       setPhotos((current) => [...current, ...added]);
-      setError("");
     }
     setPhotoMessage(messages.filter(Boolean).join(" "));
   }
@@ -109,20 +130,68 @@ export function DefectCapture() {
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canContinue(photos.length, notes)) {
-      setError("Add at least one photo or type some notes before continuing.");
+    if (!canContinue(notes)) {
+      setError("Type some notes about the defect before continuing.");
       return;
     }
     setError("");
-    setReady(true);
+    setStep({ name: "review" });
   }
 
-  if (ready) {
+  /** Clears the report and form, ready for the next defect. */
+  function reset(next: Step) {
+    photos.forEach((p) => URL.revokeObjectURL(p.url));
+    setPhotos([]);
+    setNotes("");
+    setPhotoMessage("");
+    setValues(blankValues());
+    setSaveError("");
+    setStep(next);
+  }
+
+  async function approve(final: TriageDraft) {
+    setSaving(true);
+    setSaveError("");
+    const result = await submitWorkOrder({
+      assetId,
+      notes: notes.trim(),
+      final,
+      photos: photos.map((p) => p.blob),
+    });
+    setSaving(false);
+    if (!result.ok) {
+      setSaveError(result.message);
+      return;
+    }
+    reset({ name: "saved", title: final.workOrder.title });
+    // Re-render the server parts of the page: history and status (R24, R25).
+    router.refresh();
+  }
+
+  if (step.name === "review") {
     return (
-      <CaptureSummary
-        photoCount={photos.length}
-        hasNotes={notes.trim().length > 0}
-        onEdit={() => setReady(false)}
+      <WorkOrderForm
+        values={values}
+        onChange={setValues}
+        base={base}
+        photos={photos}
+        notes={notes}
+        saving={saving}
+        saveError={saveError}
+        onApprove={(draft) => void approve(draft)}
+        onDiscard={() =>
+          reset({ name: "capture", message: "Report discarded. Nothing was saved." })
+        }
+        onEditReport={() => setStep({ name: "capture" })}
+      />
+    );
+  }
+
+  if (step.name === "saved") {
+    return (
+      <WorkOrderSaved
+        title={step.title}
+        onAnother={() => setStep({ name: "capture" })}
       />
     );
   }
@@ -136,8 +205,17 @@ export function DefectCapture() {
         Report a defect
       </h2>
       <p className="mt-1 text-sm text-text-muted">
-        Add up to {MAX_PHOTOS} photos, type or dictate notes, or both.
+        Describe the defect in the notes, by typing or dictating, and add up to {MAX_PHOTOS} photos if
+        you have them.{" "}
+        <span className="whitespace-nowrap">
+          <RequiredMark /> Required
+        </span>
       </p>
+      {step.message && (
+        <p role="status" className="mt-3 rounded-md border border-line bg-surface-raised px-3 py-2 text-sm">
+          {step.message}
+        </p>
+      )}
 
       <form
         noValidate
@@ -165,7 +243,10 @@ export function DefectCapture() {
             if (!photosLocked) void addFiles(Array.from(e.dataTransfer.files));
           }}
         >
-          <legend className="text-sm font-semibold">Photos</legend>
+          <legend className="text-sm font-semibold">
+            Photos{" "}
+            <span className="font-normal text-text-muted">(optional)</span>
+          </legend>
 
           <div
             className={`mt-2 flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-6 text-center transition-colors ${
@@ -214,7 +295,7 @@ export function DefectCapture() {
               {photos.map((photo, index) => (
                 <li
                   key={photo.id}
-                  className="overflow-hidden rounded-md border border-line bg-surface-raised"
+                  className="relative overflow-hidden rounded-md border border-line bg-surface-raised"
                 >
                   <Image
                     src={photo.url}
@@ -224,22 +305,33 @@ export function DefectCapture() {
                     unoptimized
                     className="aspect-4/3 w-full object-cover"
                   />
-                  <div className="flex items-center justify-between gap-2 p-2">
-                    <span className="truncate text-xs text-text-muted" title={photo.name}>
-                      {photo.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        removePhoto(photo.id);
-                        inputRef.current?.focus();
-                      }}
-                      aria-label={`Remove photo ${index + 1}, ${photo.name}`}
-                      className="shrink-0 rounded px-2 py-1 text-xs font-semibold text-text underline decoration-accent decoration-2 underline-offset-2 hover:bg-surface focus-visible:outline-2 focus-visible:outline-ink"
+                  <p className="truncate p-2 text-xs text-text-muted" title={photo.name}>
+                    {photo.name}
+                  </p>
+                  {/* Round black button over the photo's corner; the white
+                      ring keeps the focus outline visible on any photo. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      removePhoto(photo.id);
+                      inputRef.current?.focus();
+                    }}
+                    aria-label={`Remove photo ${index + 1}, ${photo.name}`}
+                    title="Remove photo"
+                    className="absolute top-1.5 right-1.5 flex size-8 items-center justify-center rounded-full bg-ink/80 text-surface shadow-sm hover:bg-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink focus-visible:ring-2 focus-visible:ring-surface"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 16 16"
+                      className="size-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
                     >
-                      Remove
-                    </button>
-                  </div>
+                      <path d="M4 4l8 8M12 4l-8 8" />
+                    </svg>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -257,6 +349,8 @@ export function DefectCapture() {
             setNotes((current) => appendTranscript(current, words));
             setError("");
           }}
+          invalid={missing}
+          errorId={errorId}
         />
 
         {error && (
@@ -281,40 +375,30 @@ function noopSubscribe() {
   return () => {};
 }
 
-function CaptureSummary({
-  photoCount,
-  hasNotes,
-  onEdit,
+function WorkOrderSaved({
+  title,
+  onAnother,
 }: {
-  photoCount: number;
-  hasNotes: boolean;
-  onEdit: () => void;
+  title: string;
+  onAnother: () => void;
 }) {
-  const parts = [
-    photoCount > 0 && `${photoCount} ${photoCount === 1 ? "photo" : "photos"}`,
-    hasNotes && "notes",
-  ].filter(Boolean);
-
   return (
     <section
-      aria-labelledby="defect-capture-heading"
+      aria-labelledby="work-order-saved-heading"
       className="rounded-lg border border-line border-t-4 border-t-accent bg-surface p-5 shadow-sm"
     >
-      <h2 id="defect-capture-heading" className="text-lg font-semibold">
-        Defect report ready
+      <h2 id="work-order-saved-heading" className="text-lg font-semibold">
+        Work order saved
       </h2>
       <p role="status" className="mt-2 text-sm">
-        Captured {parts.join(" and ")}.
-      </p>
-      <p className="mt-1 text-sm text-text-muted">
-        The issue and work order form comes in milestone 4.
+        &ldquo;{title}&rdquo; is now on the asset&apos;s history.
       </p>
       <button
         type="button"
-        onClick={onEdit}
-        className="mt-4 rounded-md border border-line bg-surface-raised px-4 py-2 text-sm font-semibold text-text hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        onClick={onAnother}
+        className="mt-4 min-h-11 rounded-md border border-line bg-surface-raised px-4 py-2 text-sm font-semibold text-text hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
       >
-        Edit report
+        Report another defect
       </button>
     </section>
   );

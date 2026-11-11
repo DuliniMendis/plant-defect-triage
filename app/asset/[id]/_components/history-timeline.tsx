@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import type { HistoryEntry } from "@/db/schema";
 import { formatDate, formatHours, kindLabels } from "../_lib/format";
+import { WorkOrderPhotos } from "./work-order-photos";
+
+/** Photos for each work order, keyed by work order ID, from getWorkOrderPhotos. */
+type PhotosByWorkOrder = Record<string, readonly { id: string; position: number }[]>;
 
 const kindStyles: Record<HistoryEntry["kind"], string> = {
   issue: "border-status-down text-status-down",
@@ -18,7 +22,13 @@ const severityStyles: Record<NonNullable<HistoryEntry["severity"]>, string> = {
 
 // History timeline (R6). Entries arrive newest first from `getAssetHistory`;
 // this component keeps the order it is given.
-export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
+export function HistoryTimeline({
+  entries,
+  photos = {},
+}: {
+  entries: HistoryEntry[];
+  photos?: PhotosByWorkOrder;
+}) {
   return (
     <section
       aria-labelledby="history-heading"
@@ -32,7 +42,11 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
       ) : (
         <ol aria-labelledby="history-heading" className="mt-4 space-y-3">
           {entries.map((entry) => (
-            <HistoryItem key={entry.id} entry={entry} />
+            <HistoryItem
+              key={entry.id}
+              entry={entry}
+              photos={entry.workOrderId ? photos[entry.workOrderId] : undefined}
+            />
           ))}
         </ol>
       )}
@@ -40,7 +54,13 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
   );
 }
 
-function HistoryItem({ entry }: { entry: HistoryEntry }) {
+function HistoryItem({
+  entry,
+  photos,
+}: {
+  entry: HistoryEntry;
+  photos?: PhotosByWorkOrder[string];
+}) {
   return (
     <li className="rounded-md border border-line bg-page p-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -79,6 +99,7 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
           ) : null}
         </dl>
       ) : null}
+      {photos ? <WorkOrderPhotos photos={photos} title={entry.title} /> : null}
     </li>
   );
 }

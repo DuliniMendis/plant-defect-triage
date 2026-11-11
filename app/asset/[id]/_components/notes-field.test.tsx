@@ -8,6 +8,8 @@ import type {
 } from "../_lib/speech";
 import { DefectCapture } from "./defect-capture";
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+
 // jsdom has no speech recognition, so a fake stands in for Chrome's. Tests
 // drive it the way the browser would: start, results, errors, end.
 class FakeRecognition implements SpeechRecognitionLike {
@@ -59,7 +61,7 @@ afterEach(() => {
 function setup() {
   vi.stubGlobal("webkitSpeechRecognition", FakeRecognition);
   const user = userEvent.setup();
-  render(<DefectCapture />);
+  render(<DefectCapture assetId="EX-014" />);
   return {
     user,
     notes: screen.getByRole("textbox", { name: "Notes" }),
@@ -101,7 +103,9 @@ test("dictated words appear in the notes and can be corrected by typing", async 
   expect(notes).toHaveValue("Oil under the boom");
 
   await user.click(screen.getByRole("button", { name: "Continue" }));
-  expect(screen.getByRole("status")).toHaveTextContent("Captured notes.");
+  expect(
+    screen.getByRole("form", { name: "Issue and work order" }),
+  ).toBeInTheDocument();
 });
 
 test("dictating again adds to the notes", async () => {
@@ -124,7 +128,7 @@ test("dictating again adds to the notes", async () => {
   );
 });
 
-test("dictated notes clear the 'add a photo or notes' error", async () => {
+test("dictated notes clear the 'notes required' error", async () => {
   const { user, dictate } = setup();
   await user.click(screen.getByRole("button", { name: "Continue" }));
   expect(screen.getByRole("alert")).toBeInTheDocument();
@@ -167,7 +171,7 @@ test("stops listening when the report is continued", async () => {
 
 test("disables Dictate and points to Chrome when the browser cannot dictate", async () => {
   const user = userEvent.setup();
-  render(<DefectCapture />);
+  render(<DefectCapture assetId="EX-014" />);
 
   const dictate = screen.getByRole("button", { name: "Dictate" });
   expect(dictate).toBeDisabled();

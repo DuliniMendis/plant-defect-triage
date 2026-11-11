@@ -74,9 +74,6 @@ async function installFakeSpeech(page: Page) {
   });
 }
 
-const panel = (page: Page) =>
-  page.getByRole("region", { name: /Report a defect|Defect report ready/ });
-
 test.describe("with speech recognition", () => {
   test.beforeEach(async ({ page }) => {
     await installFakeSpeech(page);
@@ -116,7 +113,10 @@ test.describe("with speech recognition", () => {
     await expect(notes).toHaveValue("Oil leaking from the boom ram started this morning");
 
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(panel(page).getByRole("status")).toHaveText("Captured notes.");
+    await expect(page.getByRole("form", { name: "Issue and work order" })).toBeVisible();
+    await expect(
+      page.getByText("Oil leaking from the boom ram started this morning"),
+    ).toBeVisible();
   });
 
   test("says when the microphone is blocked", async ({ page }) => {

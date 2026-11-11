@@ -1,7 +1,7 @@
 import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 
-// Defect capture (R7, R9, R10, R11) on the asset profile, with the sample
+// Defect capture (R7, R9, R10, R11; notes required, photos optional) on the asset profile, with the sample
 // photos from demo-files. Needs a seeded database (`pnpm db:seed`).
 const photo = (name: string) =>
   path.join(__dirname, "..", "demo-files", "photos", name);
@@ -14,18 +14,19 @@ test.beforeEach(async ({ page }) => {
 
 // Next.js adds its own role="alert" route announcer, so look inside the panel.
 const panel = (page: Page) =>
-  page.getByRole("region", { name: /Report a defect|Defect report ready/ });
+  page.getByRole("region", { name: "Report a defect" });
 
-test("needs a photo or notes before continuing", async ({ page }) => {
+test("needs notes before continuing", async ({ page }) => {
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(panel(page).getByRole("alert")).toHaveText(
-    "Add at least one photo or type some notes before continuing.",
+    "Type some notes about the defect before continuing.",
   );
 
   await page.getByRole("textbox", { name: "Notes" }).fill("Oil under the boom");
   await expect(panel(page).getByRole("alert")).toBeHidden();
   await page.getByRole("button", { name: "Continue" }).click();
-  await expect(panel(page).getByRole("status")).toHaveText("Captured notes.");
+  await expect(page.getByRole("form", { name: "Issue and work order" })).toBeVisible();
+  await expect(page.getByText("Oil under the boom")).toBeVisible();
 });
 
 test("adds, previews, resizes and removes sample photos", async ({ page }) => {
@@ -60,7 +61,12 @@ test("adds, previews, resizes and removes sample photos", async ({ page }) => {
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Continue" }).click();
-  await expect(panel(page).getByRole("status")).toHaveText("Captured 1 photo.");
+  await expect(panel(page).getByRole("alert")).toBeVisible();
+  await page.getByRole("textbox", { name: "Notes" }).fill("Battery terminal corroded");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(
+    page.getByRole("list", { name: "Report photos" }).getByRole("img"),
+  ).toHaveCount(1);
 });
 
 test("stops at 3 photos", async ({ page }) => {

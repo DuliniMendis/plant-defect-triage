@@ -90,3 +90,34 @@ test("says so when there is no history", () => {
   expect(screen.getByText("No history recorded yet.")).toBeInTheDocument();
   expect(screen.queryByRole("list")).not.toBeInTheDocument();
 });
+
+test("shows the photos saved with a work order on its entry (R24, R28)", () => {
+  render(
+    <HistoryTimeline
+      entries={[
+        entry({
+          id: "h-wo",
+          kind: "work-order",
+          title: "Replace boom hose",
+          workOrderId: "wo-1",
+          seeded: false,
+        }),
+        entry({ id: "h-old", title: "Earlier issue" }),
+      ]}
+      photos={{
+        "wo-1": [
+          { id: "p-1", position: 1 },
+          { id: "p-2", position: 2 },
+        ],
+      }}
+    />,
+  );
+
+  const photos = screen.getByRole("list", { name: "Photos for Replace boom hose" });
+  expect(within(photos).getByRole("img", { name: "Photo 1 for Replace boom hose" })).toHaveAttribute(
+    "src",
+    "/api/photos/p-1",
+  );
+  expect(within(photos).getAllByRole("img")).toHaveLength(2);
+  expect(screen.queryAllByRole("list", { name: /^Photos for/ })).toHaveLength(1);
+});

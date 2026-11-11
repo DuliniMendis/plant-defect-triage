@@ -79,10 +79,9 @@ describe("fitWithin", () => {
 });
 
 describe("canContinue", () => {
-  test("needs a photo or some notes", () => {
-    expect(canContinue(0, "")).toBe(false);
-    expect(canContinue(0, "   \n")).toBe(false);
-    expect(canContinue(1, "")).toBe(true);
-    expect(canContinue(0, "Hose weeping at the boom")).toBe(true);
+  test("needs some notes; photos alone are not enough", () => {
+    expect(canContinue("")).toBe(false);
+    expect(canContinue("   \n")).toBe(false);
+    expect(canContinue("Hose weeping at the boom")).toBe(true);
   });
 });

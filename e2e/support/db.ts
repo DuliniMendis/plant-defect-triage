@@ -1,0 +1,64 @@
+import { existsSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import path from "node:path";
+import { Pool } from "@neondatabase/serverless";
+import { getPhotoStore } from "../../lib/photo-store";
+
+// Direct database access for end-to-end tests: checking what was saved, and
+// removing work orders a test created so the shared demo data is left as the
+// seed made it.
+
+if (existsSync(".env.local")) process.loadEnvFile(".env.local");
+
+let pool: Pool | undefined;
+function db() {
+  pool ??= new Pool({ connectionString: process.env.DATABASE_URL });
+  return pool;
+}
+
+export async function assetStatus(assetId: string): Promise<string> {
+  const { rows } = await db().query("select status from assets where id = $1", [assetId]);
+  return rows[0].status;
+}
+
+export async function workOrderCount(assetId: string): Promise<number> {
+  const { rows } = await db().query(
+    "select count(*)::int as n from work_orders where asset_id = $1",
+    [assetId],
+  );
+  return rows[0].n;
+}
+
+export async function workOrderIds(): Promise<Set<string>> {
+  const { rows } = await db().query("select id from work_orders");
+  return new Set(rows.map((r) => r.id as string));
+}
+
+/** Removes the asset's non-seed work orders and their photos, and sets its status back. */
+export async function removeWorkOrders(assetId: string, status: string) {
+  const { rows } = await db().query(
+    `select p.blob_path from work_order_photos p
+       join work_orders w on w.id = p.work_order_id
+      where w.asset_id = $1`,
+    [assetId],
+  );
+  await db().query("delete from work_orders where asset_id = $1", [assetId]);
+  await db().query("update assets set status = $2 where id = $1", [assetId, status]);
+  await getPhotoStore().delete(rows.map((r) => r.blob_path as string));
+}
+
+/** True when photos are kept in the local stand-in rather than Vercel Blob. */
+export const usesLocalPhotos = !process.env.BLOB_READ_WRITE_TOKEN;
+
+/** Work order IDs that have photo files in the local stand-in store. */
+export async function localPhotoFolders(): Promise<string[]> {
+  const root = path.join(process.cwd(), ".data", "photos", "work-orders");
+  const folders = await readdir(root, { withFileTypes: true }).catch(() => []);
+  const withFiles: string[] = [];
+  for (const folder of folders) {
+    if (!folder.isDirectory()) continue;
+    const files = await readdir(path.join(root, folder.name));
+    if (files.length > 0) withFiles.push(folder.name);
+  }
+  return withFiles;
+}

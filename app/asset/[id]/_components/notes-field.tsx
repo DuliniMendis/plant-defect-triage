@@ -1,22 +1,29 @@
 "use client";
 
 import { UNSUPPORTED_MESSAGE, useDictation } from "../_lib/use-dictation";
+import { RequiredMark } from "./required-mark";
 
-// The notes box (R9) with voice dictation (R8). Typed and dictated notes share
-// the one box: each phrase the browser settles on is added to the end, and
-// the person can correct it by typing at any time, even while still
-// dictating.
+// The required notes box (R9, R10) with voice dictation (R8). Typed and
+// dictated notes share the one box: each phrase the browser settles on is
+// added to the end, and the person can correct it by typing at any time, even
+// while still dictating.
 export function NotesField({
   id,
   value,
   onChange,
   onDictate,
+  invalid,
+  errorId,
 }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
   /** Called with each dictated phrase, to be added to the end of the notes. */
   onDictate: (words: string) => void;
+  /** Continue was pressed with no notes: the title and box turn red. */
+  invalid: boolean;
+  /** The message explaining why the notes are invalid. */
+  errorId: string;
 }) {
   const { supported, status, interim, message, start, stop } =
     useDictation(onDictate);
@@ -26,8 +33,11 @@ export function NotesField({
   return (
     <div>
       <div className="flex items-end justify-between gap-3">
-        <label htmlFor={id} className="text-sm font-semibold">
-          Notes
+        <label
+          htmlFor={id}
+          className={`text-sm font-semibold ${invalid ? "text-status-down" : ""}`}
+        >
+          Notes <RequiredMark />
         </label>
         {/* Shown in every browser; where there is no dictation it stays
             disabled and the status line says why. */}
@@ -49,11 +59,14 @@ export function NotesField({
 
       <textarea
         id={id}
+        aria-required="true"
+        aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? errorId : undefined}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={5}
         placeholder="Type or dictate. What did you see, hear or smell? Where on the machine? When did it start?"
-        className={`mt-2 block w-full rounded-md border bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:border-ink focus-visible:outline-2 focus-visible:outline-ink ${
+        className={`mt-2 block w-full rounded-md border bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:border-ink focus-visible:outline-2 focus-visible:outline-ink aria-invalid:border-status-down ${
           active ? "border-accent ring-2 ring-accent" : "border-line"
         }`}
       />

@@ -1,13 +1,13 @@
 // Rules for the defect capture panel (R7, R10). Pure functions, so they can be
 // unit tested without a browser.
 
-export const MAX_PHOTOS = 3;
+import { ACCEPTED_TYPES, MAX_PHOTOS } from "@/lib/photo-rules";
+
+export { ACCEPTED_TYPES, MAX_PHOTOS };
 
 // Photos are resized in the browser to about this many pixels on the longest
 // side before they are sent anywhere (technical plan v2, section 5).
 export const MAX_LONG_SIDE = 1500;
-
-export const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 export type RejectedPhoto = {
   name: string;
@@ -83,7 +83,10 @@ export function fitWithin(
   };
 }
 
-/** R10: at least one photo or some notes. Whitespace alone is not notes. */
-export function canContinue(photoCount: number, notes: string): boolean {
-  return photoCount > 0 || notes.trim().length > 0;
+/**
+ * Notes are required and photos are optional (changes R10, which allowed
+ * photos alone; decided 11 Nov 2026). Whitespace alone is not notes.
+ */
+export function canContinue(notes: string): boolean {
+  return notes.trim().length > 0;
 }
