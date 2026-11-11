@@ -1,8 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { seedAssets } from "../db/seed-data";
+import { currentTempAssetIds } from "./support/temp-assets";
 
 // Needs a seeded database (`pnpm db:seed`). Runs at desktop and 768px widths.
-const total = seedAssets.length;
+// The list also holds this run's temporary assets for the write specs
+// (e2e/support/temp-assets.ts), which exist only while the tests run.
+const listed = [...seedAssets.map((a) => a.id), ...currentTempAssetIds()];
+const total = listed.length;
 const pageSize = 8;
 
 // Body rows of the asset table: the rows that link to an asset.
@@ -13,13 +17,13 @@ const rows = (page: Page) =>
     .filter({ has: page.getByRole("link") });
 const pager = (page: Page) => page.getByRole("navigation", { name: "Pagination" });
 
-test("the fleet page lists every seeded asset from the database, a page at a time", async ({
+test("the fleet page lists every asset in the database, a page at a time", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Fleet", level: 1 })).toBeVisible();
 
-  const sorted = seedAssets.map((a) => a.id).sort();
+  const sorted = listed.toSorted();
   const seen: string[] = [];
   const pageCount = Math.ceil(total / pageSize);
 
