@@ -10,9 +10,10 @@ import {
 } from "./support/db";
 
 // Work order from issue (M4: R20 to R22, R24 to R28). These tests write to the
-// shared database, so each browser project uses its own filler asset (not one
-// of the four demo assets) and removes what it created afterwards.
-const assetFor = (project: string) => (project === "tablet-chrome" ? "SS-008" : "LT-002");
+// shared database, so they run after the read-only specs (see
+// playwright.config.ts), each browser project uses its own filler asset (not
+// one of the four demo assets), and each test removes what it created.
+const assetFor = (project: string) => (project.startsWith("tablet") ? "SS-008" : "LT-002");
 
 // Tests on the same asset would see each other's work orders, and one test's
 // clean-up could remove another's, so this file runs in order within each
@@ -72,7 +73,9 @@ test("an approved work order is saved with its photo, survives a refresh and sho
     await expect(entry).toHaveCount(1);
     await expect(entry).toContainText("Work order");
     // The asset was taken out of service in the same save (R25).
-    await expect(p.getByLabel("Status")).toHaveText("Out of service");
+    await expect(
+      p.getByRole("region", { name: "Key facts" }).getByText("Out of service"),
+    ).toBeVisible();
     // The photo was stored and reads back (R28).
     const img = entry.getByRole("img", { name: `Photo 1 for ${title}` });
     await expect(img).toBeVisible();

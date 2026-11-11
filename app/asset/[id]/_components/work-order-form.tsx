@@ -15,6 +15,7 @@ import {
   type FieldErrors,
   type FormValues,
 } from "../_lib/work-order-form";
+import { RequiredMark } from "./required-mark";
 
 export type ReportPhoto = {
   id: number;
@@ -43,6 +44,16 @@ const priorityLabels: Record<Priority, string> = {
   urgent: "Urgent",
   immediate: "Immediate",
 };
+
+const requiredFields = new Set<keyof FormValues>([
+  "issueTitle",
+  "severity",
+  "safeToOperate",
+  "workOrderTitle",
+  "priority",
+  "tasks",
+  "estimatedHours",
+]);
 
 const inputClass =
   "mt-1.5 block w-full rounded-md border border-line bg-surface px-3 py-2 text-text placeholder:text-text-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink aria-invalid:border-status-down";
@@ -114,6 +125,7 @@ export function WorkOrderForm({
   // Props shared by every text control: label link, error link, invalid state.
   const control = (field: keyof FormValues) => ({
     id: id(field),
+    "aria-required": requiredFields.has(field) ? true : undefined,
     "data-field": field,
     "aria-invalid": errors[field] ? true : undefined,
     "aria-describedby": errors[field] ? errorId(field) : undefined,
@@ -124,14 +136,17 @@ export function WorkOrderForm({
   return (
     <section
       aria-labelledby="work-order-heading"
-      className="rounded-lg border border-accent bg-surface p-5"
+      className="rounded-lg border border-line border-t-4 border-t-accent bg-surface p-5 shadow-sm"
     >
       <h2 id="work-order-heading" className="text-lg font-semibold">
         Issue and work order
       </h2>
       <p className="mt-1 text-sm text-text-muted">
         Describe the issue and the work needed, then approve to save it to the
-        asset&apos;s history.
+        asset&apos;s history.{" "}
+        <span className="whitespace-nowrap">
+          <RequiredMark /> Required
+        </span>
       </p>
 
       <ReportSummary photos={photos} notes={notes} onEdit={onEditReport} disabled={saving} />
@@ -146,7 +161,7 @@ export function WorkOrderForm({
         <fieldset disabled={saving} className="space-y-4">
           <legend className="text-base font-semibold">Issue</legend>
 
-          <Field label="Title" htmlFor={id("issueTitle")} error={errors.issueTitle} errorId={errorId("issueTitle")}>
+          <Field label="Title" htmlFor={id("issueTitle")} required error={errors.issueTitle} errorId={errorId("issueTitle")}>
             <input
               {...control("issueTitle")}
               type="text"
@@ -229,7 +244,7 @@ export function WorkOrderForm({
             Work order
           </h3>
 
-          <Field label="Work order title" htmlFor={id("workOrderTitle")} error={errors.workOrderTitle} errorId={errorId("workOrderTitle")}>
+          <Field label="Work order title" htmlFor={id("workOrderTitle")} required error={errors.workOrderTitle} errorId={errorId("workOrderTitle")}>
             <input
               {...control("workOrderTitle")}
               type="text"
@@ -251,7 +266,7 @@ export function WorkOrderForm({
             errorId={errorId("priority")}
           />
 
-          <Field label="Tasks" hint="One per line" htmlFor={id("tasks")} error={errors.tasks} errorId={errorId("tasks")}>
+          <Field label="Tasks" hint="One per line" htmlFor={id("tasks")} required error={errors.tasks} errorId={errorId("tasks")}>
             <textarea
               {...control("tasks")}
               rows={4}
@@ -271,7 +286,7 @@ export function WorkOrderForm({
             />
           </Field>
 
-          <Field label="Estimated hours" htmlFor={id("estimatedHours")} error={errors.estimatedHours} errorId={errorId("estimatedHours")}>
+          <Field label="Estimated hours" htmlFor={id("estimatedHours")} required error={errors.estimatedHours} errorId={errorId("estimatedHours")}>
             <input
               {...control("estimatedHours")}
               type="text"
@@ -383,6 +398,7 @@ function Field({
   label,
   hint,
   optional,
+  required,
   htmlFor,
   error,
   errorId,
@@ -391,6 +407,7 @@ function Field({
   label: string;
   hint?: string;
   optional?: boolean;
+  required?: boolean;
   htmlFor: string;
   error?: string;
   errorId?: string;
@@ -400,6 +417,12 @@ function Field({
     <div>
       <label htmlFor={htmlFor} className="text-sm font-semibold">
         {label}
+        {required && (
+          <>
+            {" "}
+            <RequiredMark />
+          </>
+        )}
         {optional && <span className="font-normal text-text-muted"> (optional)</span>}
         {hint && <span className="font-normal text-text-muted"> · {hint}</span>}
       </label>
@@ -437,7 +460,9 @@ function Choice({
       aria-describedby={error ? errorId : undefined}
       aria-invalid={error ? true : undefined}
     >
-      <legend className="text-sm font-semibold">{legend}</legend>
+      <legend className="text-sm font-semibold">
+        {legend} <RequiredMark />
+      </legend>
       <div className="mt-1.5 flex flex-wrap gap-2">
         {options.map((option, index) => (
           <label
@@ -452,6 +477,7 @@ function Choice({
               value={option.value}
               checked={value === option.value}
               onChange={() => onChange(option.value)}
+              required
               // The first option takes focus when this choice needs attention.
               data-field={index === 0 ? field : undefined}
               className="sr-only"

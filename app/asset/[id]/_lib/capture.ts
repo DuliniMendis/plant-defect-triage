@@ -83,7 +83,10 @@ export function fitWithin(
   };
 }
 
-/** R10: at least one photo or some notes. Whitespace alone is not notes. */
-export function canContinue(photoCount: number, notes: string): boolean {
-  return photoCount > 0 || notes.trim().length > 0;
+/**
+ * Notes are required and photos are optional (changes R10, which allowed
+ * photos alone; decided 11 Nov 2026). Whitespace alone is not notes.
+ */
+export function canContinue(notes: string): boolean {
+  return notes.trim().length > 0;
 }
