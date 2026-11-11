@@ -12,7 +12,7 @@ import {
   type FleetFilters,
 } from "../_lib/filter-fleet";
 import { AssetTable } from "./asset-table";
-import { statusLabels, type Status } from "./status-badge";
+import { statusLabels, type Status } from "@/components/status-badge";
 
 const statuses = Object.keys(statusLabels) as Status[];
 

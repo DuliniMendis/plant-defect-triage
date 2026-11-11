@@ -1,14 +1,28 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { getAsset, getAssetHistory } from "@/db/queries";
 import { DefectCapture } from "./_components/defect-capture";
+import { HistoryTimeline } from "./_components/history-timeline";
+import { KeyFacts } from "./_components/key-facts";
 
-// Asset profile with defect capture and review (R5 to R25). Built out in
-// milestones 2 to 7. `params` is request-time data under Cache Components, so
-// the part that reads it sits inside a Suspense boundary.
+// Asset profile (R5, R6) with defect capture (R7 to R10) in the right-hand
+// column. Review joins it in milestones 4 to 7. `params` and the
+// database reads are request-time data under Cache Components, so they sit
+// inside a Suspense boundary.
 export default function AssetPage({ params }: PageProps<"/asset/[id]">) {
   return (
-    <Suspense fallback={<p className="text-text-muted">Loading asset…</p>}>
-      <AssetProfile params={params} />
-    </Suspense>
+    <div className="space-y-6">
+      <Link
+        href="/"
+        className="text-sm text-text-muted decoration-accent decoration-2 underline-offset-4 hover:text-text hover:underline focus-visible:outline-2 focus-visible:outline-ink"
+      >
+        ← Fleet
+      </Link>
+      <Suspense fallback={<p className="text-text-muted">Loading asset…</p>}>
+        <AssetProfile params={params} />
+      </Suspense>
+    </div>
   );
 }
 
@@ -18,18 +32,38 @@ async function AssetProfile({
   params: PageProps<"/asset/[id]">["params"];
 }) {
   const { id } = await params;
+  const [asset, history] = await Promise.all([
+    getAsset(id),
+    getAssetHistory(id),
+  ]);
+
+  if (!asset) {
+    notFound();
+  }
+
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">
-        Asset <span className="rounded bg-accent px-1.5 font-mono text-accent-ink">{id}</span>
-      </h1>
-      <p className="text-text-muted">Asset profile coming in milestone 2.</p>
-      {/* Stand-in until milestone 2 merges: M2's profile page renders
-          <ReportDefect /> in its right-hand column; swap that for
-          <DefectCapture /> when merging. */}
-      <div className="max-w-xl">
-        <DefectCapture />
+    <div className="space-y-6">
+      <header>
+        <h1 className="flex flex-wrap items-baseline gap-x-3 text-2xl font-semibold">
+          {asset.name}
+          <span className="rounded bg-accent px-1.5 font-mono text-lg text-accent-ink">
+            {asset.id}
+          </span>
+        </h1>
+        <p className="mt-1 text-text-muted">{asset.category}</p>
+      </header>
+
+      {/* One column at tablet portrait; two on desktop, with facts and
+          history on the left and defect capture on the right (plan section 7). */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-6">
+          <KeyFacts asset={asset} />
+          <HistoryTimeline entries={history} />
+        </div>
+        <div className="max-lg:order-first lg:sticky lg:top-8">
+          <DefectCapture />
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { FleetAsset } from "../_lib/filter-fleet";
-import { StatusBadge } from "./status-badge";
+import { StatusBadge } from "@/components/status-badge";
 
 const th =
   "px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-text-muted uppercase";

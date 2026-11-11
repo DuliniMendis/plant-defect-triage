@@ -1,8 +1,8 @@
 import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 
-// Defect capture (R7, R9, R10, R11) with the sample photos from demo-files.
-// Uses the placeholder asset page until milestone 2's profile page merges.
+// Defect capture (R7, R9, R10, R11) on the asset profile, with the sample
+// photos from demo-files. Needs a seeded database (`pnpm db:seed`).
 const photo = (name: string) =>
   path.join(__dirname, "..", "demo-files", "photos", name);
 

@@ -128,7 +128,7 @@ export function DefectCapture() {
   return (
     <section
       aria-labelledby="defect-capture-heading"
-      className="rounded-lg border border-accent bg-surface p-5"
+      className="rounded-lg border border-line border-t-4 border-t-accent bg-surface p-5 shadow-sm"
     >
       <h2 id="defect-capture-heading" className="text-lg font-semibold">
         Report a defect
@@ -192,7 +192,7 @@ export function DefectCapture() {
                 photosLocked
                   ? "cursor-not-allowed border-line text-text-muted"
                   : "cursor-pointer border-line bg-surface text-text hover:border-accent"
-              } peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-text`}
+              } peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink`}
             >
               Add photos
             </label>
@@ -233,7 +233,7 @@ export function DefectCapture() {
                         inputRef.current?.focus();
                       }}
                       aria-label={`Remove photo ${index + 1}, ${photo.name}`}
-                      className="shrink-0 rounded px-2 py-1 text-xs font-semibold text-text underline decoration-accent decoration-2 underline-offset-2 hover:bg-surface"
+                      className="shrink-0 rounded px-2 py-1 text-xs font-semibold text-text underline decoration-accent decoration-2 underline-offset-2 hover:bg-surface focus-visible:outline-2 focus-visible:outline-ink"
                     >
                       Remove
                     </button>
@@ -257,7 +257,7 @@ export function DefectCapture() {
             }}
             rows={5}
             placeholder="What did you see, hear or smell? Where on the machine? When did it start?"
-            className="mt-2 block w-full rounded-md border border-line bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:border-accent focus:outline-2 focus:outline-accent"
+            className="mt-2 block w-full rounded-md border border-line bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:border-ink focus-visible:outline-2 focus-visible:outline-ink"
           />
         </div>
 
@@ -270,7 +270,7 @@ export function DefectCapture() {
         <button
           type="submit"
           disabled={busy || !hydrated}
-          className="rounded-md bg-accent px-4 py-2 font-semibold text-accent-ink hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-md bg-ink px-4 py-2 font-semibold text-surface hover:bg-ink/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue
         </button>
@@ -300,7 +300,7 @@ function CaptureSummary({
   return (
     <section
       aria-labelledby="defect-capture-heading"
-      className="rounded-lg border border-accent bg-surface p-5"
+      className="rounded-lg border border-line border-t-4 border-t-accent bg-surface p-5 shadow-sm"
     >
       <h2 id="defect-capture-heading" className="text-lg font-semibold">
         Defect report ready
@@ -314,7 +314,7 @@ function CaptureSummary({
       <button
         type="button"
         onClick={onEdit}
-        className="mt-4 rounded-md border border-line bg-surface-raised px-4 py-2 text-sm font-semibold text-text hover:border-accent"
+        className="mt-4 rounded-md border border-line bg-surface-raised px-4 py-2 text-sm font-semibold text-text hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
       >
         Edit report
       </button>
