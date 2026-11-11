@@ -41,7 +41,7 @@ async function reportAndFill(page: Page, title: string) {
   await page.getByLabel("Add photos").setInputFiles(photo("telehandler-tyre-cut.jpg"));
   await expect(page.getByRole("img", { name: /^Photo 1:/ })).toBeVisible();
   await page.getByRole("textbox", { name: "Notes" }).fill("Deep cut in the front left tyre");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Fill in by hand" }).click();
 
   const form = page.getByRole("form", { name: "Issue and work order" });
   await form.getByRole("textbox", { name: "Title", exact: true }).fill("Cut in front left tyre");

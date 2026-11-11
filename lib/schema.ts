@@ -105,3 +105,26 @@ export const workOrderRequestSchema = z
   });
 
 export type WorkOrderRequest = z.infer<typeof workOrderRequestSchema>;
+
+// The response of POST /api/triage (technical plan v2, section 5). The AI is
+// asked only for the fields that need judgement. `filled` lists the fields the
+// server set from the asset's records or from a fixed rule instead, with a
+// short note saying where each came from, so the form can show it.
+export const filledSources = ["records", "rule"] as const;
+export type FilledSource = (typeof filledSources)[number];
+
+export const filledFieldSchema = z.object({
+  /** Dotted path in the draft, such as "workOrder.priority". */
+  path: z.string(),
+  source: z.enum(filledSources),
+  note: z.string(),
+});
+export type FilledField = z.infer<typeof filledFieldSchema>;
+
+export const triageResponseSchema = z.object({
+  draft: triageDraftSchema,
+  model: z.string().min(1),
+  durationMs: z.number(),
+  filled: z.array(filledFieldSchema),
+});
+export type TriageResponse = z.infer<typeof triageResponseSchema>;
