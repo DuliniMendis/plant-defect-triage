@@ -1,13 +1,13 @@
 // Rules for the defect capture panel (R7, R10). Pure functions, so they can be
 // unit tested without a browser.
 
-export const MAX_PHOTOS = 3;
+import { ACCEPTED_TYPES, MAX_PHOTOS } from "@/lib/photo-rules";
+
+export { ACCEPTED_TYPES, MAX_PHOTOS };
 
 // Photos are resized in the browser to about this many pixels on the longest
 // side before they are sent anywhere (technical plan v2, section 5).
 export const MAX_LONG_SIDE = 1500;
-
-export const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 export type RejectedPhoto = {
   name: string;
