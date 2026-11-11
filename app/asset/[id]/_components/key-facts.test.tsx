@@ -29,12 +29,23 @@ test("shows make, model, site, meter hours, next service due and status", () => 
   expect(factValue("Site")).toHaveTextContent("Northgate Quarry");
   expect(factValue("Meter hours")).toHaveTextContent("4,250 h");
   expect(factValue("Next service due")).toHaveTextContent(
-    "At 4,500 h, 250 h to go",
+    "At 4,500 h (250 h to go)",
   );
   expect(factValue("Status")).toHaveTextContent("Needs attention");
 });
 
+test("shows a gauge of the hours left before the service", () => {
+  render(<KeyFacts asset={excavator} />);
+  const gauge = screen.getByRole("meter", {
+    name: "Hours left before the next service",
+  });
+  expect(factValue("Next service due")).toContainElement(gauge);
+  expect(gauge).toHaveAttribute("aria-valuenow", "250");
+});
+
 test("says when the service is overdue", () => {
   render(<KeyFacts asset={{ ...excavator, meterHours: 4620 }} />);
-  expect(factValue("Next service due")).toHaveTextContent("Overdue by 120 h");
+  expect(factValue("Next service due")).toHaveTextContent(
+    "Overdue by 120 h (due at 4,500 h)",
+  );
 });

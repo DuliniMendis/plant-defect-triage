@@ -29,27 +29,3 @@ export function formatHours(hours: number): string {
 export function formatDate(isoDate: string): string {
   return dateFormat.format(new Date(`${isoDate}T00:00:00Z`));
 }
-
-/**
- * When the next service falls due, from the meter reading it is due at.
- * "At 4,500 h, 250 h to go", "Due now at 4,500 h" or "Overdue by 120 h".
- */
-export function describeServiceDue(
-  meterHours: number,
-  nextServiceDueHours: number,
-): { text: string; overdue: boolean } {
-  const remaining = nextServiceDueHours - meterHours;
-  if (remaining > 0) {
-    return {
-      text: `At ${formatHours(nextServiceDueHours)}, ${formatHours(remaining)} to go`,
-      overdue: false,
-    };
-  }
-  if (remaining === 0) {
-    return {
-      text: `Due now at ${formatHours(nextServiceDueHours)}`,
-      overdue: true,
-    };
-  }
-  return { text: `Overdue by ${formatHours(-remaining)}`, overdue: true };
-}

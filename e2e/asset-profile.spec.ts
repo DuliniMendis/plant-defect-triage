@@ -10,10 +10,13 @@ const historyDates = (page: Page) =>
     .locator("time")
     .evaluateAll((times) => times.map((t) => t.getAttribute("datetime") ?? ""));
 
-test("every seeded asset opens from the fleet page with its full history, newest first", async ({
-  page,
-}) => {
-  for (const asset of seedAssets) {
+// The milestone's "done when": every seeded asset opens from the fleet page
+// with its full history in order. One test per asset, so they run in parallel
+// and a failure names the asset.
+for (const asset of seedAssets) {
+  test(`${asset.id} opens from the fleet page with its full history, newest first`, async ({
+    page,
+  }) => {
     await page.goto(`/?q=${asset.id}`);
     await page
       .getByRole("table", { name: "Assets" })
@@ -30,11 +33,9 @@ test("every seeded asset opens from the fleet page with its full history, newest
     await expect(
       page.getByRole("list", { name: "History" }).getByRole("listitem"),
     ).toHaveCount(expected.length);
-    expect(await historyDates(page), asset.id).toEqual(
-      expected.toSorted().reverse(),
-    );
-  }
-});
+    expect(await historyDates(page)).toEqual(expected.toSorted().reverse());
+  });
+}
 
 test("shows an asset's key facts", async ({ page }) => {
   await page.goto("/asset/EX-014");
@@ -52,6 +53,10 @@ test("shows an asset's key facts", async ({ page }) => {
   }
   await expect(facts).toContainText("Caterpillar");
   await expect(facts).toContainText("Riverside Quarry");
+  await expect(facts).toContainText("At 7,000 h (158 h to go)");
+  await expect(
+    facts.getByRole("meter", { name: "Hours left before the next service" }),
+  ).toHaveAttribute("aria-valuenow", "158");
 });
 
 test("offers the Report a defect entry point", async ({ page }) => {

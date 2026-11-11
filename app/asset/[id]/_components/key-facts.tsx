@@ -1,6 +1,8 @@
 import { StatusBadge } from "@/components/status-badge";
 import type { Asset } from "@/db/schema";
-import { describeServiceDue, formatHours } from "../_lib/format";
+import { formatHours } from "../_lib/format";
+import { describeServiceDue } from "../_lib/service-due";
+import { ServiceGauge } from "./service-gauge";
 
 // Key facts panel (R5): make, model, site, meter hours, next service due and
 // current status.
@@ -18,13 +20,16 @@ export function KeyFacts({ asset }: { asset: Asset }) {
     {
       term: "Next service due",
       value: (
-        <span
-          className={
-            serviceDue.overdue ? "font-medium text-status-down" : undefined
-          }
-        >
-          {serviceDue.text}
-        </span>
+        <div className="space-y-2">
+          <p
+            className={
+              serviceDue.overdue ? "font-medium text-status-down" : undefined
+            }
+          >
+            {serviceDue.text}
+          </p>
+          <ServiceGauge serviceDue={serviceDue} />
+        </div>
       ),
     },
     { term: "Status", value: <StatusBadge status={asset.status} /> },

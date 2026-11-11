@@ -34,6 +34,13 @@
   --severity-medium: #a16207;
   --severity-high: #c2410c;
   --severity-critical: #b91c1c;
+
+  /* Service gauge fills, from plenty of hours left to due. Fills only; the
+     hours are always shown as text beside the gauge. */
+  --service-good: #22c55e;
+  --service-fair: #ffcc00;
+  --service-low: #f97316;
+  --service-due: #dc2626;
 }
 
 @theme inline {
@@ -55,6 +62,10 @@
   --color-severity-medium: var(--severity-medium);
   --color-severity-high: var(--severity-high);
   --color-severity-critical: var(--severity-critical);
+  --color-service-good: var(--service-good);
+  --color-service-fair: var(--service-fair);
+  --color-service-low: var(--service-low);
+  --color-service-due: var(--service-due);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
