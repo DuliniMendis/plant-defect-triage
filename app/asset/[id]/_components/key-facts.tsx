@@ -1,11 +1,6 @@
+import { StatusBadge } from "@/components/status-badge";
 import type { Asset } from "@/db/schema";
-import { describeServiceDue, formatHours, statusLabels } from "../_lib/format";
-
-const statusStyles: Record<Asset["status"], string> = {
-  operational: "border-status-ok text-status-ok",
-  "needs-attention": "border-status-attention text-status-attention",
-  "out-of-service": "border-status-down text-status-down",
-};
+import { describeServiceDue, formatHours } from "../_lib/format";
 
 // Key facts panel (R5): make, model, site, meter hours, next service due and
 // current status.
@@ -23,27 +18,22 @@ export function KeyFacts({ asset }: { asset: Asset }) {
     {
       term: "Next service due",
       value: (
-        <span className={serviceDue.overdue ? "text-status-down" : undefined}>
+        <span
+          className={
+            serviceDue.overdue ? "font-medium text-status-down" : undefined
+          }
+        >
           {serviceDue.text}
         </span>
       ),
     },
-    {
-      term: "Status",
-      value: (
-        <span
-          className={`inline-block rounded-full border px-2 py-0.5 text-sm font-medium ${statusStyles[asset.status]}`}
-        >
-          {statusLabels[asset.status]}
-        </span>
-      ),
-    },
+    { term: "Status", value: <StatusBadge status={asset.status} /> },
   ];
 
   return (
     <section
       aria-labelledby="key-facts-heading"
-      className="rounded-lg border border-line bg-surface p-5"
+      className="rounded-lg border border-line bg-surface p-5 shadow-sm"
     >
       <h2 id="key-facts-heading" className="text-lg font-semibold">
         Key facts

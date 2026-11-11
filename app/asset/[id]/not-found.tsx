@@ -11,7 +11,7 @@ export default function AssetNotFound() {
       </p>
       <Link
         href="/"
-        className="inline-block rounded-md bg-accent px-4 py-2 font-semibold text-accent-ink hover:bg-accent-strong"
+        className="inline-block rounded-md bg-ink px-4 py-2 font-semibold text-surface hover:bg-ink/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
       >
         Back to the fleet
       </Link>

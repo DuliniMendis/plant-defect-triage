@@ -2,13 +2,6 @@ import { defineConfig, devices } from "@playwright/test";
 
 // End-to-end tests. Chrome only, at desktop and tablet widths (requirements v3,
 // section 7).
-
-// Load .env.local so tests can tell whether a database is configured, as the
-// dev server does. A missing file is fine: database-backed tests skip.
-try {
-  process.loadEnvFile(".env.local");
-} catch {}
-
 const port = 3100;
 const baseURL = `http://localhost:${port}`;
 

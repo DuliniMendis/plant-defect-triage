@@ -1,19 +1,44 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { seedAssets, seedHistory } from "../db/seed-data";
 
-// Asset profile (milestone 2, R5 and R6). These read seeded assets from the
-// database, so they are skipped until DATABASE_URL is set (milestone 1 connects
-// Neon and adds the seed script). EX-014 is the seeded excavator.
-test.skip(
-  !process.env.DATABASE_URL,
-  "DATABASE_URL is not set; run `vercel env pull .env.local` and `pnpm db:seed`",
-);
+// Asset profile (milestone 2, R5 and R6). Needs a seeded database
+// (`pnpm db:seed`). Runs at desktop and 768px widths.
 
-test("shows an asset's key facts and its history, newest first", async ({
+const historyDates = (page: Page) =>
+  page
+    .getByRole("list", { name: "History" })
+    .locator("time")
+    .evaluateAll((times) => times.map((t) => t.getAttribute("datetime") ?? ""));
+
+test("every seeded asset opens from the fleet page with its full history, newest first", async ({
   page,
 }) => {
+  for (const asset of seedAssets) {
+    await page.goto(`/?q=${asset.id}`);
+    await page
+      .getByRole("table", { name: "Assets" })
+      .getByRole("link", { name: asset.name })
+      .click();
+    await expect(page).toHaveURL(`/asset/${asset.id}`);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      asset.id,
+    );
+
+    const expected = seedHistory
+      .filter((entry) => entry.assetId === asset.id)
+      .map((entry) => entry.date);
+    await expect(
+      page.getByRole("list", { name: "History" }).getByRole("listitem"),
+    ).toHaveCount(expected.length);
+    expect(await historyDates(page), asset.id).toEqual(
+      expected.toSorted().reverse(),
+    );
+  }
+});
+
+test("shows an asset's key facts", async ({ page }) => {
   await page.goto("/asset/EX-014");
 
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const facts = page.getByRole("region", { name: "Key facts" });
   for (const term of [
     "Make",
@@ -25,14 +50,8 @@ test("shows an asset's key facts and its history, newest first", async ({
   ]) {
     await expect(facts.getByText(term, { exact: true })).toBeVisible();
   }
-
-  const history = page.getByRole("list", { name: "History" });
-  await expect(history.getByRole("listitem").first()).toBeVisible();
-  const dates = await history
-    .locator("time")
-    .evaluateAll((times) => times.map((t) => t.getAttribute("datetime") ?? ""));
-  expect(dates.length).toBeGreaterThan(0);
-  expect(dates).toEqual([...dates].sort().reverse());
+  await expect(facts).toContainText("Caterpillar");
+  await expect(facts).toContainText("Riverside Quarry");
 });
 
 test("offers the Report a defect entry point", async ({ page }) => {
@@ -61,6 +80,17 @@ test("puts defect capture beside the history on desktop and above it at tablet w
     expect(report!.x).toBe(facts!.x);
     expect(report!.y + report!.height).toBeLessThanOrEqual(facts!.y);
   }
+});
+
+test("the profile has no horizontal scroll", async ({ page }) => {
+  await page.goto("/asset/EX-014");
+  await expect(page.getByRole("region", { name: "Key facts" })).toBeVisible();
+  const overflow = await page.evaluate(
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
 });
 
 test("shows a not-found message for an unknown asset", async ({ page }) => {

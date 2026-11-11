@@ -1,4 +1,4 @@
-import type { Asset, HistoryEntry } from "@/db/schema";
+import type { HistoryEntry } from "@/db/schema";
 
 // Display text for the asset profile.
 
@@ -12,12 +12,6 @@ const dateFormat = new Intl.DateTimeFormat("en-AU", {
   year: "numeric",
   timeZone: "UTC",
 });
-
-export const statusLabels: Record<Asset["status"], string> = {
-  operational: "Operational",
-  "needs-attention": "Needs attention",
-  "out-of-service": "Out of service",
-};
 
 export const kindLabels: Record<HistoryEntry["kind"], string> = {
   issue: "Issue",

@@ -6,7 +6,7 @@ const kindStyles: Record<HistoryEntry["kind"], string> = {
   issue: "border-status-down text-status-down",
   repair: "border-status-ok text-status-ok",
   "schedule-check": "border-line text-text-muted",
-  "work-order": "border-accent text-accent",
+  "work-order": "border-accent bg-accent text-accent-ink",
 };
 
 const severityStyles: Record<NonNullable<HistoryEntry["severity"]>, string> = {
@@ -22,7 +22,7 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
   return (
     <section
       aria-labelledby="history-heading"
-      className="rounded-lg border border-line bg-surface p-5"
+      className="rounded-lg border border-line bg-surface p-5 shadow-sm"
     >
       <h2 id="history-heading" className="text-lg font-semibold">
         History
@@ -42,7 +42,7 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
 
 function HistoryItem({ entry }: { entry: HistoryEntry }) {
   return (
-    <li className="rounded-md border border-line bg-surface-raised p-4">
+    <li className="rounded-md border border-line bg-page p-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         <span
           className={`rounded-full border px-2 py-0.5 font-medium ${kindStyles[entry.kind]}`}

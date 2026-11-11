@@ -13,7 +13,10 @@ import { ReportDefect } from "./_components/report-defect";
 export default function AssetPage({ params }: PageProps<"/asset/[id]">) {
   return (
     <div className="space-y-6">
-      <Link href="/" className="text-sm text-text-muted hover:text-accent">
+      <Link
+        href="/"
+        className="text-sm text-text-muted decoration-accent decoration-2 underline-offset-4 hover:text-text hover:underline focus-visible:outline-2 focus-visible:outline-ink"
+      >
         ← Fleet
       </Link>
       <Suspense fallback={<p className="text-text-muted">Loading asset…</p>}>
