@@ -28,10 +28,10 @@ export type CapturedPhoto = {
   height: number;
 };
 
-// Defect capture (R7, R9, R10): up to 3 photos by file picker or drag and
-// drop, with a preview and remove button for each, and a notes box. Voice
-// dictation (milestone 5) will write into the same notes box. "Continue" leads
-// to the issue and work order form in milestone 4.
+// Defect capture (R7, R9, R10): a required notes box and up to 3 optional
+// photos by file picker or drag and drop, with a preview and remove button
+// for each. Voice dictation (milestone 5) will write into the same notes box.
+// "Continue" leads to the issue and work order form in milestone 4.
 export function DefectCapture() {
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [notes, setNotes] = useState("");
@@ -66,6 +66,9 @@ export function DefectCapture() {
     () => false,
   );
   const photosLocked = full || busy || !hydrated;
+  // Set when Continue is pressed without notes; cleared as soon as some are
+  // typed. Turns the Notes title and box red.
+  const missing = error !== "";
 
   async function addFiles(files: readonly File[]) {
     if (busy || files.length === 0) return;
@@ -93,7 +96,6 @@ export function DefectCapture() {
 
     if (added.length > 0) {
       setPhotos((current) => [...current, ...added]);
-      setError("");
     }
     setPhotoMessage(messages.filter(Boolean).join(" "));
   }
@@ -107,8 +109,8 @@ export function DefectCapture() {
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canContinue(photos.length, notes)) {
-      setError("Add at least one photo or type some notes before continuing.");
+    if (!canContinue(notes)) {
+      setError("Type some notes about the defect before continuing.");
       return;
     }
     setError("");
@@ -134,7 +136,11 @@ export function DefectCapture() {
         Report a defect
       </h2>
       <p className="mt-1 text-sm text-text-muted">
-        Add up to {MAX_PHOTOS} photos, type notes, or both.
+        Describe the defect in the notes, and add up to {MAX_PHOTOS} photos if
+        you have them.{" "}
+        <span className="whitespace-nowrap">
+          <RequiredMark /> Required
+        </span>
       </p>
 
       <form
@@ -163,7 +169,10 @@ export function DefectCapture() {
             if (!photosLocked) void addFiles(Array.from(e.dataTransfer.files));
           }}
         >
-          <legend className="text-sm font-semibold">Photos</legend>
+          <legend className="text-sm font-semibold">
+            Photos{" "}
+            <span className="font-normal text-text-muted">(optional)</span>
+          </legend>
 
           <div
             className={`mt-2 flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-6 text-center transition-colors ${
@@ -212,7 +221,7 @@ export function DefectCapture() {
               {photos.map((photo, index) => (
                 <li
                   key={photo.id}
-                  className="overflow-hidden rounded-md border border-line bg-surface-raised"
+                  className="relative overflow-hidden rounded-md border border-line bg-surface-raised"
                 >
                   <Image
                     src={photo.url}
@@ -222,22 +231,33 @@ export function DefectCapture() {
                     unoptimized
                     className="aspect-4/3 w-full object-cover"
                   />
-                  <div className="flex items-center justify-between gap-2 p-2">
-                    <span className="truncate text-xs text-text-muted" title={photo.name}>
-                      {photo.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        removePhoto(photo.id);
-                        inputRef.current?.focus();
-                      }}
-                      aria-label={`Remove photo ${index + 1}, ${photo.name}`}
-                      className="shrink-0 rounded px-2 py-1 text-xs font-semibold text-text underline decoration-accent decoration-2 underline-offset-2 hover:bg-surface focus-visible:outline-2 focus-visible:outline-ink"
+                  <p className="truncate p-2 text-xs text-text-muted" title={photo.name}>
+                    {photo.name}
+                  </p>
+                  {/* Round black button over the photo's corner; the white
+                      ring keeps the focus outline visible on any photo. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      removePhoto(photo.id);
+                      inputRef.current?.focus();
+                    }}
+                    aria-label={`Remove photo ${index + 1}, ${photo.name}`}
+                    title="Remove photo"
+                    className="absolute top-1.5 right-1.5 flex size-8 items-center justify-center rounded-full bg-ink/80 text-surface shadow-sm hover:bg-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink focus-visible:ring-2 focus-visible:ring-surface"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 16 16"
+                      className="size-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
                     >
-                      Remove
-                    </button>
-                  </div>
+                      <path d="M4 4l8 8M12 4l-8 8" />
+                    </svg>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -245,11 +265,17 @@ export function DefectCapture() {
         </fieldset>
 
         <div>
-          <label htmlFor={notesId} className="text-sm font-semibold">
-            Notes
+          <label
+            htmlFor={notesId}
+            className={`text-sm font-semibold ${missing ? "text-status-down" : ""}`}
+          >
+            Notes <RequiredMark />
           </label>
           <textarea
             id={notesId}
+            aria-required="true"
+            aria-invalid={missing || undefined}
+            aria-describedby={missing ? errorId : undefined}
             value={notes}
             onChange={(e) => {
               setNotes(e.target.value);
@@ -257,7 +283,7 @@ export function DefectCapture() {
             }}
             rows={5}
             placeholder="What did you see, hear or smell? Where on the machine? When did it start?"
-            className="mt-2 block w-full rounded-md border border-line bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:border-ink focus-visible:outline-2 focus-visible:outline-ink"
+            className="mt-2 block w-full rounded-md border border-line bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:border-ink focus-visible:outline-2 focus-visible:outline-ink aria-invalid:border-status-down"
           />
         </div>
 
@@ -279,6 +305,16 @@ export function DefectCapture() {
   );
 }
 
+// Red asterisk for a required field. Hidden from screen readers, which hear
+// the field as required (aria-required) instead.
+function RequiredMark() {
+  return (
+    <span aria-hidden="true" className="text-status-down">
+      *
+    </span>
+  );
+}
+
 function noopSubscribe() {
   return () => {};
 }
@@ -293,8 +329,8 @@ function CaptureSummary({
   onEdit: () => void;
 }) {
   const parts = [
-    photoCount > 0 && `${photoCount} ${photoCount === 1 ? "photo" : "photos"}`,
     hasNotes && "notes",
+    photoCount > 0 && `${photoCount} ${photoCount === 1 ? "photo" : "photos"}`,
   ].filter(Boolean);
 
   return (

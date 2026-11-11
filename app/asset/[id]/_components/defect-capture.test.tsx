@@ -41,17 +41,46 @@ function setup() {
   };
 }
 
-test("will not continue with no photos and no notes", async () => {
+test("will not continue without notes", async () => {
   const { user, notes, continueButton } = setup();
 
   await user.click(continueButton);
   expect(screen.getByRole("alert")).toHaveTextContent(
-    "Add at least one photo or type some notes before continuing.",
+    "Type some notes about the defect before continuing.",
   );
 
   await user.type(notes, "   ");
   await user.click(continueButton);
   expect(screen.getByRole("alert")).toBeInTheDocument();
+  expect(screen.queryByText("Defect report ready")).not.toBeInTheDocument();
+});
+
+test("marks notes as required and flags them until filled", async () => {
+  const { user, notes, continueButton } = setup();
+
+  expect(notes).toBeRequired();
+  expect(screen.getByRole("group", { name: "Photos (optional)" })).toBeInTheDocument();
+  expect(continueButton).toBeEnabled();
+  expect(notes).toBeValid();
+
+  await user.click(continueButton);
+  expect(notes).toBeInvalid();
+  expect(notes).toHaveAccessibleDescription(
+    "Type some notes about the defect before continuing.",
+  );
+
+  await user.type(notes, "Leak");
+  expect(notes).toBeValid();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("photos alone are not enough to continue", async () => {
+  const { user, photoInput, notes, continueButton } = setup();
+
+  await user.upload(photoInput, [jpeg("hose.jpg")]);
+  await screen.findByRole("img", { name: "Photo 1: hose.jpg" });
+  await user.click(continueButton);
+  expect(notes).toBeInvalid();
   expect(screen.queryByText("Defect report ready")).not.toBeInTheDocument();
 });
 
@@ -69,8 +98,8 @@ test("continues with notes only", async () => {
   expect(screen.getByRole("status")).toHaveTextContent("Captured notes.");
 });
 
-test("adds photos with a preview and continues with photos only", async () => {
-  const { user, photoInput, continueButton } = setup();
+test("adds photos with a preview and continues with notes and photos", async () => {
+  const { user, photoInput, notes, continueButton } = setup();
 
   await user.upload(photoInput, [jpeg("hose.jpg"), jpeg("fitting.jpg")]);
 
@@ -82,8 +111,11 @@ test("adds photos with a preview and continues with photos only", async () => {
   );
   expect(screen.getByRole("img", { name: "Photo 2: fitting.jpg" })).toBeInTheDocument();
 
+  await user.type(notes, "Leak at boom");
   await user.click(continueButton);
-  expect(screen.getByRole("status")).toHaveTextContent("Captured 2 photos.");
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Captured notes and 2 photos.",
+  );
 });
 
 test("removes a photo and frees its preview", async () => {
@@ -133,7 +165,7 @@ test("refuses files that are not images", async () => {
 test("accepts photos dropped on the photos area", async () => {
   setup();
 
-  fireEvent.drop(screen.getByRole("group", { name: "Photos" }), { dataTransfer: { files: [jpeg("tyre.jpg")] } });
+  fireEvent.drop(screen.getByRole("group", { name: "Photos (optional)" }), { dataTransfer: { files: [jpeg("tyre.jpg")] } });
 
   expect(
     await screen.findByRole("img", { name: "Photo 1: tyre.jpg" }),
@@ -148,7 +180,7 @@ test("keeps photos and notes when going back to edit", async () => {
   await user.type(notes, "Leak at boom");
   await user.click(continueButton);
   expect(screen.getByRole("status")).toHaveTextContent(
-    "Captured 1 photo and notes.",
+    "Captured notes and 1 photo.",
   );
 
   await user.click(screen.getByRole("button", { name: "Edit report" }));
