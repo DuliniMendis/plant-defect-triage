@@ -11,6 +11,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     include: ["**/*.test.{ts,tsx}"],
-    exclude: ["node_modules/**", ".next/**", "e2e/**"],
+    // `.claude/` holds git worktrees for other branches, each with its own
+    // node_modules.
+    exclude: ["**/node_modules/**", "**/.next/**", "e2e/**", ".claude/**"],
   },
 });
