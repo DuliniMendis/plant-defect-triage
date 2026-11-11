@@ -2,13 +2,26 @@ import { describe, expect, test } from "vitest";
 import { seedAssets, seedHistory } from "./seed-data";
 
 describe("seed data", () => {
-  test("has the four demo assets, one of each kind", () => {
-    expect(seedAssets.map((a) => a.category)).toEqual([
-      "Excavator",
-      "Telehandler",
-      "Light vehicle",
-      "Generator",
+  test("starts with the four demo assets that have sample photos", () => {
+    expect(seedAssets.slice(0, 4).map((a) => a.id)).toEqual([
+      "EX-014",
+      "TH-007",
+      "LV-022",
+      "GN-003",
     ]);
+  });
+
+  test("has enough assets for three pages of the fleet list", () => {
+    expect(seedAssets.length).toBeGreaterThan(16);
+  });
+
+  test("every asset that is not operational has an open issue explaining why", () => {
+    for (const asset of seedAssets.filter((a) => a.status !== "operational")) {
+      const open = seedHistory.filter(
+        (h) => h.assetId === asset.id && h.kind === "issue" && h.status === "open",
+      );
+      expect(open, asset.id).not.toHaveLength(0);
+    }
   });
 
   test("asset and history IDs are unique", () => {

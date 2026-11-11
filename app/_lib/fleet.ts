@@ -12,6 +12,7 @@ export async function listFleet() {
       name: assets.name,
       make: assets.make,
       model: assets.model,
+      category: assets.category,
       site: assets.site,
       status: assets.status,
     })

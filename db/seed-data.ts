@@ -3,6 +3,11 @@ import type { assets, historyEntries } from "./schema";
 // The demo fleet and its history (R29). Asset data is fictional; the makes and
 // models are real equipment, named only to make the demo realistic.
 //
+// The first four assets are the demo assets: each has a sample defect photo
+// and detailed history. The rest fill out the fleet so the list has enough
+// assets to search, filter and page through; each has a recent service and,
+// when it is not operational, the open issue that explains why.
+//
 // History IDs are fixed so links to them (repeat findings, milestone 7) stay
 // valid after every reseed. Two assets carry history that sets up a repeat
 // finding (technical plan v2, section 4):
@@ -13,7 +18,7 @@ import type { assets, historyEntries } from "./schema";
 type NewAsset = typeof assets.$inferInsert;
 type NewHistoryEntry = typeof historyEntries.$inferInsert & { id: string };
 
-export const seedAssets: NewAsset[] = [
+const demoAssets: NewAsset[] = [
   {
     id: "EX-014",
     name: "20t Excavator",
@@ -65,7 +70,7 @@ const entry = (e: Omit<NewHistoryEntry, "seeded">): NewHistoryEntry => ({
   seeded: true,
 });
 
-export const seedHistory: NewHistoryEntry[] = [
+const demoHistory: NewHistoryEntry[] = [
   // EX-014: repeat boom hose leaks.
   entry({
     id: "EX-014-H1",
@@ -239,3 +244,97 @@ export const seedHistory: NewHistoryEntry[] = [
     status: "open",
   }),
 ];
+
+// Supporting fleet. `issue` is the open issue behind a non-operational status.
+type SupportingAsset = NewAsset & {
+  serviceDate: string;
+  issue?: {
+    date: string;
+    title: string;
+    component: string;
+    severity: NonNullable<NewHistoryEntry["severity"]>;
+  };
+};
+
+const supportingAssets: SupportingAsset[] = [
+  { id: "EX-009", name: "21t Excavator", make: "Komatsu", model: "PC210LC-11", category: "Excavator", site: "Northbank Rail Yard", meterHours: 4215, nextServiceDueHours: 4500, status: "operational", serviceDate: "2026-09-08" },
+  { id: "EX-021", name: "5t Mini Excavator", make: "Kubota", model: "KX057-5", category: "Excavator", site: "Harbour Road Depot", meterHours: 1388, nextServiceDueHours: 1500, status: "operational", serviceDate: "2026-08-19" },
+  { id: "EX-030", name: "13t Excavator", make: "Hitachi", model: "ZX135US-7", category: "Excavator", site: "Eastside Water Plant", meterHours: 2960, nextServiceDueHours: 3000, status: "needs-attention", serviceDate: "2026-06-24",
+    issue: { date: "2026-11-03", title: "Slew ring grinding noise when turning left", component: "Slew drive", severity: "medium" } },
+  { id: "WL-004", name: "Wheel Loader", make: "Caterpillar", model: "950 GC", category: "Wheel loader", site: "Riverside Quarry", meterHours: 7730, nextServiceDueHours: 8000, status: "operational", serviceDate: "2026-09-29" },
+  { id: "WL-011", name: "Wheel Loader", make: "Volvo", model: "L90H", category: "Wheel loader", site: "Riverside Quarry", meterHours: 5104, nextServiceDueHours: 5500, status: "needs-attention", serviceDate: "2026-07-14",
+    issue: { date: "2026-10-27", title: "Reversing camera screen flickers", component: "Cab electrics", severity: "low" } },
+  { id: "SS-002", name: "Skid Steer Loader", make: "Bobcat", model: "S650", category: "Skid steer", site: "Westlink Civil Site", meterHours: 2340, nextServiceDueHours: 2500, status: "operational", serviceDate: "2026-09-15" },
+  { id: "SS-008", name: "Skid Steer Loader", make: "CASE", model: "SV280B", category: "Skid steer", site: "Northbank Rail Yard", meterHours: 1675, nextServiceDueHours: 2000, status: "operational", serviceDate: "2026-08-05" },
+  { id: "TH-012", name: "Telehandler", make: "Manitou", model: "MT 1840", category: "Telehandler", site: "Northbank Rail Yard", meterHours: 2890, nextServiceDueHours: 3000, status: "operational", serviceDate: "2026-07-30" },
+  { id: "TH-015", name: "Telehandler", make: "Genie", model: "GTH-5519", category: "Telehandler", site: "Eastside Water Plant", meterHours: 1120, nextServiceDueHours: 1500, status: "operational", serviceDate: "2026-10-06" },
+  { id: "DT-001", name: "Articulated Dump Truck", make: "Volvo", model: "A30G", category: "Dump truck", site: "Riverside Quarry", meterHours: 9410, nextServiceDueHours: 9500, status: "operational", serviceDate: "2026-10-12" },
+  { id: "DT-006", name: "Articulated Dump Truck", make: "Caterpillar", model: "730", category: "Dump truck", site: "Riverside Quarry", meterHours: 11250, nextServiceDueHours: 11500, status: "out-of-service", serviceDate: "2026-08-25",
+    issue: { date: "2026-11-05", title: "Transmission will not select reverse; awaiting parts", component: "Transmission", severity: "high" } },
+  { id: "RL-003", name: "Smooth Drum Roller", make: "BOMAG", model: "BW 213 D-5", category: "Roller", site: "Westlink Civil Site", meterHours: 3305, nextServiceDueHours: 3500, status: "operational", serviceDate: "2026-09-01" },
+  { id: "RL-010", name: "Smooth Drum Roller", make: "HAMM", model: "H 13i", category: "Roller", site: "Eastside Water Plant", meterHours: 1940, nextServiceDueHours: 2000, status: "needs-attention", serviceDate: "2026-06-10",
+    issue: { date: "2026-10-21", title: "Vibration not engaging on high amplitude", component: "Drum vibration", severity: "medium" } },
+  { id: "EW-005", name: "Boom Lift", make: "JLG", model: "600S", category: "Elevated work platform", site: "Harbour Road Depot", meterHours: 1560, nextServiceDueHours: 1750, status: "operational", serviceDate: "2026-09-22" },
+  { id: "EW-018", name: "Scissor Lift", make: "Genie", model: "GS-3246", category: "Elevated work platform", site: "Northbank Rail Yard", meterHours: 870, nextServiceDueHours: 1000, status: "out-of-service", serviceDate: "2026-07-07",
+    issue: { date: "2026-11-02", title: "Platform drifts down under load", component: "Lift hydraulics", severity: "critical" } },
+  { id: "LT-002", name: "Mobile Light Tower", make: "Atlas Copco", model: "HiLight V5+", category: "Light tower", site: "Westlink Civil Site", meterHours: 5280, nextServiceDueHours: 5500, status: "operational", serviceDate: "2026-08-12" },
+  { id: "GN-009", name: "100 kVA Generator", make: "Atlas Copco", model: "QAS 100", category: "Generator", site: "Eastside Water Plant", meterHours: 6620, nextServiceDueHours: 7000, status: "operational", serviceDate: "2026-09-18" },
+  { id: "LV-031", name: "Dual-cab Ute", make: "Ford", model: "Ranger XLT", category: "Light vehicle", site: "Westlink Civil Site", meterHours: 1430, nextServiceDueHours: 1500, status: "operational", serviceDate: "2026-10-01" },
+  { id: "LV-040", name: "Single-cab Ute", make: "Isuzu", model: "D-Max SX", category: "Light vehicle", site: "Northbank Rail Yard", meterHours: 980, nextServiceDueHours: 1000, status: "needs-attention", serviceDate: "2026-05-26",
+    issue: { date: "2026-10-29", title: "Brake pedal feels soft", component: "Brakes", severity: "high" } },
+  { id: "LV-044", name: "Tray-back Ute", make: "Toyota", model: "LandCruiser 79", category: "Light vehicle", site: "Riverside Quarry", meterHours: 3120, nextServiceDueHours: 3250, status: "operational", serviceDate: "2026-09-10" },
+];
+
+// About 150 hours before today's reading, rounded to a 10-hour mark.
+const meterAtService = (asset: SupportingAsset) =>
+  Math.floor((asset.meterHours - 150) / 10) * 10;
+
+const supportingHistory: NewHistoryEntry[] = supportingAssets.flatMap((asset) => {
+  const entries: NewHistoryEntry[] = [
+    entry({
+      id: `${asset.id}-H1`,
+      assetId: asset.id,
+      date: asset.serviceDate,
+      kind: "schedule-check",
+      title: "Scheduled service",
+      detail: "Fluids and filters changed, general inspection completed.",
+      meterHours: meterAtService(asset),
+      status: "closed",
+    }),
+  ];
+  if (asset.issue) {
+    entries.push(
+      entry({
+        id: `${asset.id}-H2`,
+        assetId: asset.id,
+        date: asset.issue.date,
+        kind: "issue",
+        title: asset.issue.title,
+        component: asset.issue.component,
+        severity: asset.issue.severity,
+        meterHours: asset.meterHours,
+        status: "open",
+      }),
+    );
+  }
+  return entries;
+});
+
+export const seedAssets: NewAsset[] = [
+  ...demoAssets,
+  ...supportingAssets.map(
+    (a): NewAsset => ({
+      id: a.id,
+      name: a.name,
+      make: a.make,
+      model: a.model,
+      category: a.category,
+      site: a.site,
+      meterHours: a.meterHours,
+      nextServiceDueHours: a.nextServiceDueHours,
+      status: a.status,
+    }),
+  ),
+];
+
+export const seedHistory: NewHistoryEntry[] = [...demoHistory, ...supportingHistory];

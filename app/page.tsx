@@ -1,10 +1,13 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { AssetCard } from "./_components/asset-card";
+import { FleetBrowser } from "./_components/fleet-browser";
+import { filtersFromParams, pageFromParams } from "./_lib/filter-fleet";
 import { listFleet } from "./_lib/fleet";
 
-// Fleet screen (R1, R4). The QR code upload (R2) arrives in milestone 8.
-export default function FleetPage() {
+// Fleet screen (R1, R4): every asset, with a search box, filters by type,
+// site and status, and pages of eight. The QR code upload (R2) arrives in
+// milestone 8.
+export default function FleetPage({ searchParams }: PageProps<"/">) {
   return (
     <section aria-labelledby="fleet-heading" className="space-y-6">
       <div className="space-y-1">
@@ -16,18 +19,20 @@ export default function FleetPage() {
         </p>
       </div>
       <Suspense fallback={<FleetSkeleton />}>
-        <FleetList />
+        <FleetList searchParams={searchParams} />
       </Suspense>
     </section>
   );
 }
 
-const gridClass = "grid gap-4 md:grid-cols-2 lg:grid-cols-4";
-
-async function FleetList() {
+async function FleetList({
+  searchParams,
+}: {
+  searchParams: PageProps<"/">["searchParams"];
+}) {
   // Read at request time, never at build time, so the list is always current.
   await connection();
-  const fleet = await listFleet();
+  const [fleet, params] = await Promise.all([listFleet(), searchParams]);
 
   if (fleet.length === 0) {
     return (
@@ -39,25 +44,26 @@ async function FleetList() {
   }
 
   return (
-    <ul aria-label="Assets" className={gridClass}>
-      {fleet.map((asset) => (
-        <li key={asset.id}>
-          <AssetCard asset={asset} />
-        </li>
-      ))}
-    </ul>
+    <FleetBrowser
+      fleet={fleet}
+      initialFilters={filtersFromParams(params)}
+      initialPage={pageFromParams(params)}
+    />
   );
 }
 
 function FleetSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Loading assets" className={gridClass}>
-      {Array.from({ length: 4 }, (_, i) => (
-        <div
-          key={i}
-          className="h-40 animate-pulse rounded-lg border border-line bg-surface"
-        />
-      ))}
+    <div aria-busy="true" aria-label="Loading assets" className="space-y-4">
+      <div className="h-16 animate-pulse rounded-md bg-surface-raised" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div
+            key={i}
+            className="h-40 animate-pulse rounded-lg border border-line bg-surface"
+          />
+        ))}
+      </div>
     </div>
   );
 }
