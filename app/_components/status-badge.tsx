@@ -12,7 +12,7 @@ const statusStyles: Record<Status, { label: string; dot: string }> = {
 export function StatusBadge({ status }: { status: Status }) {
   const { label, dot } = statusStyles[status];
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-ink px-2.5 py-0.5 text-xs font-medium whitespace-nowrap">
+    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised px-2.5 py-0.5 text-xs font-medium whitespace-nowrap">
       <span aria-hidden className={`size-2 rounded-full ${dot}`} />
       {label}
     </span>
