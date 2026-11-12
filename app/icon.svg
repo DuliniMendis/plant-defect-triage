@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- App icon: a plain yellow triangle on black, the theme's ink and accent
+       colours (app/globals.css). Next.js serves it from the app/icon.svg file
+       convention. -->
+  <rect width="32" height="32" rx="7" fill="#141414"/>
+  <path d="M16 6.5 27 25.5H5Z" fill="#ffcc00" stroke="#ffcc00" stroke-width="2" stroke-linejoin="round"/>
+</svg>
