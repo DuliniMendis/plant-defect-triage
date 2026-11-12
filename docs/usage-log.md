@@ -17,6 +17,7 @@ Session: Claude Fable 5.2, medium effort, auto permission mode, 1M-token context
 | 7 | M8 QR code lookup (DUL-12, new session) | QR image script and 24 saved codes, "Upload QR code" on the fleet page with error messages, unit, component and E2E tests | 175,425 | 18% | 32% |
 | 8 | M6 AI fills the form (DUL-10, new session, worktree) | POST /api/triage with structured output through AI Gateway, prompt caching (system prompt and asset history), server fill of priority, out of service, parts and hours from rules and records; "Draft with AI" with progress, AI findings, retry and fill by hand; unit, component and E2E tests; live model checks | 297,984 | 30% | 42% |
 | 9 | M7 AI repeat check and clarifying question (DUL-11, new session, worktree) | Repeat finding with links that highlight the matching history entries; clarifying question with answer and re-draft; unclear sample photo; prompt rules tightened after live checks; unit, component and E2E tests | 199,940 | 20% | 46% |
+| 10 | M9 evals, NOTICE and README (DUL-13, DUL-64, new session, worktree) | Eval cases, scorer and `pnpm eval` runner; first Sonnet 5.5 vs Haiku 5.5 run (24 live calls); NOTICE licences and services; README evals section; Linear tasks DUL-64 and DUL-65 | 175,471 | 18% | 47% |
 
 Breakdown at checkpoint 1: messages 92,768; system tools 17,575; MCP tools 16,632; system prompt 12,715; skills 9,964; MCP server instructions 1,261.
 
@@ -33,3 +34,4 @@ Checkpoint 7 is from another session (Claude Opus 5.5, worktree for DUL-12). Its
 Checkpoint 8 is from another session (Claude Opus 5.5, worktree for DUL-10). Its 5-hour figure is account-wide. Three live triage calls were made to Claude Sonnet 5.5 through AI Gateway during this milestone; the second call of the pair read 3,076 prompt tokens from cache.
 
 Checkpoint 9 is from another session (Claude Opus 5.5, worktree for DUL-11). Its 5-hour figure is account-wide. Six live triage calls were made to Claude Sonnet 5.5 through AI Gateway on EX-014 (clear photo, unclear photo, unclear photo with an answer, run twice). The first run showed the model claiming a repeat while still asking where the leak was, and asking for a new photo after the answer; two prompt rules were added and the second run behaved as required.
+Checkpoint 10 is from another session (Claude Opus 5.5, worktree for DUL-13). Its 5-hour figure is account-wide. The eval run made 26 live triage calls through AI Gateway (2 for a smoke test, 24 for the full run), about $0.21 at list price.

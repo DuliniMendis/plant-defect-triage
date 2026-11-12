@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "test:e2e": "tsx scripts/run-e2e.ts",
     "e2e:seed": "tsx scripts/e2e-temp-assets.ts seed",
-    "e2e:clean": "tsx scripts/e2e-temp-assets.ts clean"
+    "e2e:clean": "tsx scripts/e2e-temp-assets.ts clean",
+    "eval": "tsx evals/run.mts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "4.0.139",
@@ -49,6 +50,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "jsdom": "^31.0.0",
+    "sharp": "0.35.5",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5",

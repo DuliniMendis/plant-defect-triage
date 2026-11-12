@@ -1,6 +1,6 @@
 # Plant Defect Triage — Requirements
 
-A concept for Sitemate's Gearbelt. Named "Gearbelt Defect Triage" in versions 1 and 2.
+Concept demo. Versions 1 and 2 used an earlier working title.
 
 Status: Version 3 (11 Nov 2026). Previous versions: [version 2](requirements-v2.md), [version 1](requirements.md)
 
@@ -15,15 +15,15 @@ Status: Version 3 (11 Nov 2026). Previous versions: [version 2](requirements-v2.
 | Access | Private to one browser | Anyone with the URL sees and can add to the same data | A consequence of shared storage with no login |
 | Demo fleet | Assumed | Confirmed: excavator, telehandler, light vehicle, generator | Decided |
 | Styling | Open question | Black and yellow theme (R30) | Decided |
-| App name | Gearbelt Defect Triage | Plant Defect Triage, subtitled "A concept for Gearbelt" (R30) | Avoids using Sitemate's product name as the app's own name |
-| Repository and disclaimers | Not stated | Private repository; interview-demo disclaimers in the README and the app (R31 to R33) | Requested, to avoid any IP concern with Sitemate |
+| App name | An earlier working title | Plant Defect Triage, subtitled "Concept demo" (R30) | A neutral descriptive name |
+| Repository and disclaimers | Not stated | Private repository; concept-demo disclaimers in the README and the app (R31 to R33) | Requested, to make clear what the demo is and is not |
 | Sample photos | Open question | AI-generated images plus public-domain photos, with a credits file (R34) | Decided: found on the web or generated |
 
 ## Changes from version 1
 
 | Area | Version 1 | Version 2 | Why |
 |---|---|---|---|
-| Target devices | Mobile first, laptop also | Desktop and tablet only; phone later | A phone is hard to record for the Loom |
+| Target devices | Mobile first, laptop also | Desktop and tablet only; phone later | A phone is hard to record for the demo video |
 | Browser | Chrome and Safari | Chrome only | Simpler; speech recognition is most reliable in Chrome |
 | QR lookup (R2) | Scan with the phone camera | Upload a saved QR code image through a file picker | Works on a laptop and records cleanly |
 | QR sheet (R3) | Printable page of QR codes | Removed. QR codes are saved as image files instead | No phone scanning in this demo |
@@ -34,25 +34,24 @@ Status: Version 3 (11 Nov 2026). Previous versions: [version 2](requirements-v2.
 | Model | Not specified | Claude Sonnet 5.5, with Haiku 5.5 compared during testing | Sufficient for the task at lower cost |
 | Sample mode | Canned draft when no key is set | Removed | A real key will be configured; manual entry remains the fallback |
 | Hosting | Open question | Vercel | Decided |
-| Audience | Open question | Sitemate interview | Decided |
+| Audience | Open question | A recorded demo walkthrough | Decided |
 
 Requirement numbers are unchanged from version 1 so the two versions can be compared line by line.
 
 ## 1. Purpose
 
-A demo app that shows how AI could extend Sitemate's Storm from Dashpivot into Gearbelt. A mechanic or operator reports a defect on a piece of plant with photos and a voice note. AI drafts the issue, rates its severity, checks the asset's history for repeats, and proposes a work order. A person reviews and approves before anything is saved.
+A demo app that shows how AI could fit into an asset maintenance workflow (QR asset lookup, issues, schedule checks, work orders). A mechanic or operator reports a defect on a piece of plant with photos and a voice note. AI drafts the issue, rates its severity, checks the asset's history for repeats, and proposes a work order. A person reviews and approves before anything is saved.
 
-The app is for a Sitemate interview. It is the subject of a Loom video about how it was built with AI, so the build process is a deliverable alongside the app (see section 9).
+The app is the subject of a demo video about how it was built with AI, so the build process is a deliverable alongside the app (see section 9).
 
 ## 2. Why this idea
 
-- Storm launched in June 2026 for Dashpivot only. Sitemate says Gearbelt access is "coming soon".
-- Gearbelt already has the pieces this flow connects: QR asset lookup, issues, schedule checks and work orders.
-- Storm's rule is that every AI output is a draft until a human reviews and saves. This demo keeps that rule.
+- Plant and equipment maintenance apps already have the pieces this flow connects: QR asset lookup, issues, schedule checks and work orders.
+- The demo's design rule is that every AI output is a draft until a human reviews and saves.
 
-What the demo should show an interviewer:
+What the demo should show:
 
-- An understanding of Sitemate's products and where the AI layer stops today.
+- How AI could fit into an asset maintenance workflow, and where it should stop.
 - Product judgement: a small, complete flow rather than a broad, shallow one.
 - A disciplined way of working with AI: research, requirements, a plan, then a build.
 
@@ -62,7 +61,7 @@ What the demo should show an interviewer:
 |---|---|
 | Operator or mechanic | Report a defect in under a minute without typing much |
 | Maintenance supervisor | A clear, consistent issue and a ready-to-approve work order |
-| Interviewer at Sitemate | To see the flow end to end in about two minutes |
+| Demo viewer | To see the flow end to end in about two minutes |
 
 The practical use is on a phone on site. This demo targets desktop and tablet so it can be recorded; phone support is a later step (see section 10).
 
@@ -123,15 +122,15 @@ The AI receives the photos, the notes and the asset's profile and history. It re
 - R29. **New.** The demo data can be restored to its seeded starting state between recordings.
 
 ### 5.8 Styling, repository and disclaimers
-- R30. **New.** The app is named "Plant Defect Triage", with the subtitle "A concept for Gearbelt". It uses a black and yellow theme. It uses no Sitemate logos, typefaces, screenshots or other brand assets, and does not imitate the look of Sitemate's products.
-- R31. **New.** The code repository is private. It is shared only with people you choose, such as the interviewer.
+- R30. **New.** The app is named "Plant Defect Triage", with the subtitle "Concept demo". It uses a black and yellow theme. It uses original colour tokens and no third-party brand assets.
+- R31. **New.** The code repository is private. It is shared only with people you choose.
 - R32. **New.** The README and a footer on every screen carry a disclaimer (draft wording below).
-- R33. **New.** The app is built only from publicly available information about Sitemate's products. It contains no Sitemate code, data or confidential material, and does not connect to any Sitemate system. Sitemate product names appear only to describe what the concept relates to.
+- R33. **New.** The app contains only original code, fictional data and openly licensed or generated assets. It does not connect to any external maintenance system.
 - R34. **New.** Sample defect photos are either AI-generated for this demo or public-domain (CC0) images. A credits file lists the source and licence of each. No photo shows a person, a number plate, or a manufacturer's logo.
 
 Draft disclaimer wording:
 
-> This is an independent concept demo built for a job interview. It is not a Sitemate product and is not affiliated with, endorsed by or sponsored by Sitemate. Sitemate, Dashpivot, Gearbelt, Flowsite and Storm are names of Sitemate's products and are used here only to describe the idea. The app was built from publicly available information, contains no Sitemate code, data or brand assets, and uses fictional asset data. Not for commercial use.
+> This is an independent concept demo with fictional asset data. It is not a commercial product and is not affiliated with, endorsed by or sponsored by any equipment maker or software vendor. Real equipment makes and models are named only for realism. The app contains only original code, fictional data and openly licensed or generated assets.
 
 This wording states what the demo is and is not. It is not legal advice and cannot guarantee that no IP question could be raised; it records that care was taken.
 
@@ -150,7 +149,7 @@ This wording states what the demo is and is not. It is not legal advice and cann
 - **Speed.** A draft should come back in roughly 10 seconds or less.
 - **Failure handling.** If the AI call fails, the reviewer can retry or fill in the form by hand.
 - **Secrets.** No AI key or database credentials in the browser or the repository. AI calls and all database access run on the server.
-- **Access.** There is no login, so anyone with the URL can view and add data. The URL is kept unshared until the interview.
+- **Access.** There is no login, so anyone with the URL can view and add data. Share the link only with people who should see it.
 
 ## 8. Technical approach
 
@@ -169,7 +168,7 @@ Summarised here; detail is in the [technical plan, version 2](technical-plan-v2.
 
 ## 9. Build-process deliverable
 
-A separate published page, for use in the Loom video, that records:
+A separate published page, for use in the walkthrough video, that records:
 
 - Every prompt used, in order, with what each one produced.
 - Model and settings (Claude Fable 5.2, medium effort, auto permission mode, Claude desktop app Code tab).
@@ -185,19 +184,19 @@ It will only record what actually happened in this session.
 - Login, roles, approver identity and multi-user sync.
 - Offline use.
 - Browsers other than Chrome.
-- Real Gearbelt or Dashpivot integration.
+- Integration with a real maintenance system.
 - Parts inventory, costing and scheduling.
 - Push notifications.
 
 ## 11. Open questions
 
-Resolved since version 1: AI key (Vercel AI Gateway), hosting (Vercel), voice support (Chrome only), audience (Sitemate interview), storing photos (kept with the approved work order, in Vercel Blob).
+Resolved since version 1: AI key (Vercel AI Gateway), hosting (Vercel), voice support (Chrome only), audience (a recorded demo walkthrough), storing photos (kept with the approved work order, in Vercel Blob).
 
-Resolved in version 3: demo fleet (excavator, telehandler, light vehicle, generator), styling (black and yellow), sample photos (generated or public-domain), app name ("Plant Defect Triage", with the subtitle "A concept for Gearbelt").
+Resolved in version 3: demo fleet (excavator, telehandler, light vehicle, generator), styling (black and yellow), sample photos (generated or public-domain), app name ("Plant Defect Triage", with the subtitle "Concept demo").
 
 Still open:
 
-1. **Deployed URL.** A private repository does not make the deployed app private. Proposed: turn on Vercel's deployment protection so the URL needs a sign-in or a share link, and give the interviewer a share link.
+1. **Deployed URL.** A private repository does not make the deployed app private. Proposed: turn on Vercel's deployment protection so the URL needs a sign-in or a share link, and share a link only with people who should see it.
 ## 12. Acceptance criteria
 
 - In Chrome on a laptop, uploading a saved QR code image opens the right asset.

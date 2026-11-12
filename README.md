@@ -1,8 +1,8 @@
 # Plant Defect Triage
 
-A concept for Gearbelt.
+Concept demo.
 
-> **Disclaimer.** This is an independent concept demo built for a job interview. It is not a Sitemate product and is not affiliated with, endorsed by or sponsored by Sitemate. Sitemate, Dashpivot, Gearbelt, Flowsite and Storm are names of Sitemate's products and are used here only to describe the idea. The app was built from publicly available information, contains no Sitemate code, data or brand assets, and uses fictional asset data. Not for commercial use.
+> **Disclaimer.** This is an independent concept demo. It is not a commercial product and is not affiliated with, endorsed by or sponsored by any equipment maker or software vendor. All asset data is fictional; real equipment makes and models are named only for realism. Not for commercial use.
 
 A mechanic or operator reports a defect on a piece of plant with photos and a voice note. AI drafts the issue, rates its severity, checks the asset's history for repeats and proposes a work order. A person reviews and approves before anything is saved.
 
@@ -14,8 +14,9 @@ See [NOTICE.md](NOTICE.md) for what this repository does and does not contain.
 |---|---|
 | [Requirements, version 5](docs/requirements-v5.md) | What the demo must do |
 | [Technical plan, version 2](docs/technical-plan-v2.md) | How it is built |
-| [Data model](docs/data-model.md) | Tables and the triage draft |
+| [Data model, draft 2](docs/data-model-v2.md) | Tables and the triage draft |
 | [Milestones](docs/milestones.md) | Build order |
+| [AI triage evals](docs/evals.md) | Eval results, Sonnet 5.5 against Haiku 5.5 |
 
 ## Stack
 
@@ -33,6 +34,8 @@ db/seed-data.ts       Demo fleet and history
 db/seed.ts            `pnpm db:seed`
 lib/schema.ts         Zod schema for the triage draft
 demo-files/photos/    Sample defect photos and their credits
+demo-files/qr/        One QR code image per asset, for the QR lookup
+evals/                AI triage evals: fixed cases, scoring and the runner
 docs/                 Requirements, plans, usage log
 e2e/                  Playwright end-to-end tests
 ```
@@ -85,3 +88,28 @@ pnpm dev
 | `pnpm db:migrate` | Apply migrations to the database |
 | `pnpm db:seed` | Restore the demo fleet and its history to the starting state; removes any approved work orders. Safe to run between takes |
 | `pnpm db:studio` | Browse the database |
+| `pnpm qr:generate` | Write one QR code image per asset to `demo-files/qr/` |
+| `pnpm eval` | Run the AI triage evals on Sonnet 5.5 and Haiku 5.5 (calls AI Gateway; see below) |
+
+## AI triage evals
+
+`pnpm eval` sends a fixed set of defect reports through the same draft call the app uses (`app/api/triage/_lib/draft-triage.ts`) and scores each draft. It reads the seeded fleet from `db/seed-data.ts`, so it needs AI Gateway credentials (`vercel env pull .env.local`) but not the database.
+
+The cases are in [evals/cases.ts](evals/cases.ts): for each of the four demo assets, a clear defect, a repeat of seeded history, a safety-critical defect, an unclear photo, or notes that contradict the photo (technical plan v2, section 11). Each draft is checked for:
+
+- severity within the allowed range, with under-rating counted separately, since it is the costly error
+- safe to operate
+- repeat detection, linking the right history entries, and no repeat claimed where there is none
+- a clarifying question when the report is unclear or contradictory, and none when it is clear
+- confidence, the component name reused from the history, and no photo observations without photos
+- response time and token use
+
+```bash
+pnpm eval
+```
+
+```bash
+pnpm eval --models anthropic/claude-haiku-5.5 --cases repeat,unclear --runs 3
+```
+
+`--cases` takes case IDs, asset IDs or kinds. Each run prints a line per draft and a summary per model, and saves the full drafts to `evals/results/` (not committed). A full run on both models costs about 20 cents at list price. The model the app uses is set by `AI_GATEWAY_MODEL` (default Haiku 5.5, chosen from the evals).
