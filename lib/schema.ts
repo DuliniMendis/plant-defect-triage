@@ -96,15 +96,23 @@ export const workOrderRequestSchema = z
     aiDraft: triageDraftSchema.nullable(),
     final: triageDraftSchema,
     model: z.string().min(1).nullable(),
+    // The AI run that produced `aiDraft` (R40). Empty for a manual entry, and
+    // for an AI draft whose run could not be recorded.
+    aiRunId: z.string().min(1).nullable().default(null),
   })
   // An AI draft always comes with the model that wrote it, and a manual
   // work order has neither (data model draft 2).
   .refine((r) => (r.aiDraft === null) === (r.model === null), {
     message: "An AI draft needs its model, and a manual entry has neither.",
     path: ["model"],
+  })
+  .refine((r) => r.aiRunId === null || r.aiDraft !== null, {
+    message: "Only an AI draft has an AI run.",
+    path: ["aiRunId"],
   });
 
 export type WorkOrderRequest = z.infer<typeof workOrderRequestSchema>;
+export type WorkOrderRequestInput = z.input<typeof workOrderRequestSchema>;
 
 // The response of POST /api/triage (technical plan v2, section 5). The AI is
 // asked only for the fields that need judgement. `filled` lists the fields the
@@ -126,6 +134,8 @@ export const triageResponseSchema = z.object({
   model: z.string().min(1),
   durationMs: z.number(),
   filled: z.array(filledFieldSchema),
+  /** The recorded AI run, sent back with the approval (R40). Null if recording failed. */
+  runId: z.string().nullable(),
 });
 export type TriageResponse = z.infer<typeof triageResponseSchema>;
 

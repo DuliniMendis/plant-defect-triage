@@ -205,9 +205,10 @@ classDiagram
 
 - A triage draft is never stored on its own. Discarding one leaves only its AI run, which holds measurements and no content (R21).
 - `seeded` marks demo starting data, so the seed script can restore it (R29).
-- `aiDraft`, `model` and `aiRunId` are all empty or all set. When set, `model` matches the run's model.
+- `aiDraft` and `model` are both empty or both set. `aiRunId` is set only when `aiDraft` is. It can be empty on an AI-drafted work order if recording the run failed, which never blocks a draft.
 - Only a run with status `succeeded`, for the same asset, can be linked to a work order.
-- A failed run has no tokens, cost or generation ID, and records only the kind of failure, never the error text.
+- A failed run records the kind of failure (`model-call`, `invalid-output` or `incomplete-draft`), never the error text. When the model did respond, its tokens are kept, because that response was still paid for.
+- `AiRun.model` is the model that was asked (the `AI_GATEWAY_MODEL` value), so every run of one model groups together. `WorkOrder.model` is the model the response reports.
 - `costUsd` is filled in after the draft is returned, and can stay empty if AI Gateway does not report it. Empty means unknown, not zero.
 - If the approved draft has `takeOutOfService` set, the asset's status becomes `out-of-service` in the same transaction as the work order (R25, R27).
 - No user or approver is modelled. Login is out of scope for the demo.

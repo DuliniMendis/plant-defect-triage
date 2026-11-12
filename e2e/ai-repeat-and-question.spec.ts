@@ -37,6 +37,7 @@ function respond(draft: Partial<TriageResponse["draft"]>): TriageResponse {
     model: "anthropic/claude-sonnet-5.5",
     durationMs: 8100,
     filled: [],
+    runId: null,
   };
 }
 

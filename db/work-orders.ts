@@ -3,6 +3,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import type { TriageDraft } from "@/lib/schema";
 import { getDb } from "./client";
 import {
+  aiRuns,
   assets,
   historyEntries,
   workOrderPhotos,
@@ -21,6 +22,7 @@ export type WorkOrderRecord = {
     final: TriageDraft;
     changedFields: string[];
     model: string | null;
+    aiRunId: string | null;
   };
   historyEntry: {
     id: string;
@@ -41,6 +43,9 @@ export type WorkOrderRecord = {
 
 export class UnknownAssetError extends Error {}
 
+/** The AI run sent with an approval cannot be linked to this work order (R40). */
+export class InvalidAiRunError extends Error {}
+
 /**
  * Writes an approved work order, its history entry, its photo rows and any
  * status change in one transaction (R24, R25, R27). Nothing is kept if any
@@ -55,6 +60,29 @@ export async function insertWorkOrder(record: WorkOrderRecord): Promise<void> {
       .limit(1);
     if (!asset) {
       throw new UnknownAssetError(`No asset ${record.workOrder.assetId}`);
+    }
+
+    // Only a succeeded run for the same asset, not yet linked to another work
+    // order, can be linked (data model draft 3). The unique constraint on
+    // ai_run_id also guards against two approvals at once.
+    const { aiRunId } = record.workOrder;
+    if (aiRunId) {
+      const [run] = await tx
+        .select({ assetId: aiRuns.assetId, status: aiRuns.status })
+        .from(aiRuns)
+        .where(eq(aiRuns.id, aiRunId))
+        .limit(1);
+      if (!run || run.assetId !== record.workOrder.assetId || run.status !== "succeeded") {
+        throw new InvalidAiRunError(`AI run ${aiRunId} cannot be linked`);
+      }
+      const [linked] = await tx
+        .select({ id: workOrders.id })
+        .from(workOrders)
+        .where(eq(workOrders.aiRunId, aiRunId))
+        .limit(1);
+      if (linked) {
+        throw new InvalidAiRunError(`AI run ${aiRunId} is already linked`);
+      }
     }
 
     await tx.insert(workOrders).values(record.workOrder);

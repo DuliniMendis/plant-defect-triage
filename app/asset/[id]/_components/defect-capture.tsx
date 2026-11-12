@@ -213,6 +213,7 @@ export function DefectCapture({ assetId }: { assetId: string }) {
       notes: notes.trim(),
       aiDraft: ai?.draft ?? null,
       model: ai?.model ?? null,
+      aiRunId: ai?.runId ?? null,
       final,
       photos: photos.map((p) => p.blob),
     });

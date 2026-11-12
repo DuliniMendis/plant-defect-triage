@@ -43,7 +43,7 @@ In `POST /api/triage`:
 
 1. Validate the request as in version 2.
 2. Time the `generateText` call. Pass `telemetry: { functionId: "triage-draft" }` and `providerOptions: { gateway: { tags: ["triage-draft"] } }`. Check both option names against the installed `ai` and `@ai-sdk/gateway` docs before writing the code.
-3. Insert one `ai_runs` row with the asset, model, outcome, duration, tokens and generation ID. Do this whether the call succeeded or failed. A failed call has no tokens, and records only the kind of failure (for example `gateway-error` or `invalid-output`), not the error text.
+3. Insert one `ai_runs` row with the asset, model, outcome, duration, tokens and generation ID. Do this whether the call succeeded or failed. A failed run records only the kind of failure (`model-call`, `invalid-output` or `incomplete-draft`), not the error text. Tokens are kept when the model responded, since that response was paid for.
 4. Return `{ draft, model, durationMs, runId }`.
 5. Fetch the cost after the response has been sent, using Next.js `after()`. Read the bundled `after` docs in `node_modules/next/dist/docs/` first. Call `gateway.getGenerationInfo()` and write `totalCost` to `ai_runs.cost_usd`. The gateway can take about 90 seconds to ingest a request, so retry a few times with a growing delay. If cost is still unavailable, leave it empty. The Insights page counts runs that are missing a cost rather than treating them as zero.
 
@@ -53,7 +53,7 @@ A clarification re-run (R23) is a new request and gets its own run. Only the run
 
 ## 3. Linking the approval (R40)
 
-`POST /api/work-orders` takes an optional `aiRunId`. The server checks that the run exists, succeeded, belongs to the same asset and is not already linked to another work order, then stores it on the work order in the same transaction. An invalid `aiRunId` is a 400. `aiRunId`, `aiDraft` and `model` are either all set or all empty.
+`POST /api/work-orders` takes an optional `aiRunId`. The server checks that the run exists, succeeded, belongs to the same asset and is not already linked to another work order, then stores it on the work order in the same transaction. An invalid `aiRunId` is a 400. `aiRunId` is only accepted with an `aiDraft`, and may be empty with one if recording the run failed.
 
 Discard still calls nothing, so a discarded draft simply leaves a run with no work order (R21).
 
@@ -61,13 +61,13 @@ Discard still calls nothing, so a discarded draft simply leaves a run with no wo
 
 Route `app/insights/page.tsx`, a Server Component. The database reads sit inside a `<Suspense>` boundary, because Cache Components are on. An optional `?model=` search parameter narrows every figure to one model (R43), and a model picker lists the models found in `ai_runs`.
 
-The queries live in `db/insights.ts`, so they can be tested apart from the page.
+`db/insights.ts` reads the runs and their linked work orders. The figures are worked out in TypeScript in `app/insights/_lib/summarise.ts`, so they can be unit tested without a database. The demo has at most a few hundred runs, so reading them all is cheap. If that grows, the same figures move into SQL (`percentile_cont` for the percentiles).
 
-| Panel | Query |
+| Panel | Figure |
 |---|---|
-| Requests | Count of runs; count where `status = 'failed'` |
-| Cost per draft | Average and sum of `input_tokens`, `output_tokens` and `cost_usd` over succeeded runs; count of succeeded runs with no cost yet |
-| Request time | `percentile_cont(0.5)` and `percentile_cont(0.95) within group (order by duration_ms)` over succeeded runs, with the count |
+| Requests | Count of runs; count of failed runs |
+| Cost per draft | Average and sum of input tokens, output tokens and cost over succeeded runs; count of succeeded runs with no cost yet |
+| Request time | p50 and p95 of duration over succeeded runs, by linear interpolation (the same method as Postgres `percentile_cont`), with the count |
 | Approval share | Succeeded runs with a linked work order, divided by all succeeded runs |
 | Edit measures | Over work orders with an `ai_run_id`: the share with no changed fields; the average count of changed fields out of 12; the count per field path; severity raised or lowered, from comparing the severity in `ai_draft` and `final` on the scale low < medium < high < critical |
 

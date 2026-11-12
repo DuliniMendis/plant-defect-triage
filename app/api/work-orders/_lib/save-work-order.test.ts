@@ -37,6 +37,7 @@ const manualRequest = (): WorkOrderRequest => ({
   aiDraft: null,
   final: finalDraft(),
   model: null,
+  aiRunId: null,
 });
 
 const photo = (name = "x") => ({
