@@ -75,6 +75,44 @@ export async function localPhotoFolders(): Promise<string[]> {
   return withFiles;
 }
 
+/** IDs of the asset's history entries. */
+export async function historyIds(assetId: string): Promise<string[]> {
+  const { rows } = await db().query("select id from history_entries where asset_id = $1", [assetId]);
+  return rows.map((r) => r.id as string);
+}
+
+/**
+ * Adds an issue to the asset's history, optionally as the entry of a work
+ * order with one photo row (its file path need not exist). Returns the IDs.
+ */
+export async function insertIssue(
+  assetId: string,
+  title: string,
+  { withWorkOrder = false } = {},
+): Promise<{ entryId: string; workOrderId: string | null }> {
+  const entryId = crypto.randomUUID();
+  let workOrderId: string | null = null;
+  if (withWorkOrder) {
+    workOrderId = crypto.randomUUID();
+    const final = { issue: { title }, workOrder: { title } };
+    await db().query(
+      `insert into work_orders (id, asset_id, notes, final) values ($1, $2, 'E2E delete', $3)`,
+      [workOrderId, assetId, JSON.stringify(final)],
+    );
+    await db().query(
+      `insert into work_order_photos (id, work_order_id, blob_path, position)
+       values ($1, $2, $3, 1)`,
+      [crypto.randomUUID(), workOrderId, `work-orders/${workOrderId}/e2e-missing.jpg`],
+    );
+  }
+  await db().query(
+    `insert into history_entries (id, asset_id, date, kind, title, status, work_order_id)
+     values ($1, $2, '2026-11-01', $3, $4, 'open', $5)`,
+    [entryId, assetId, withWorkOrder ? "work-order" : "issue", title, workOrderId],
+  );
+  return { entryId, workOrderId };
+}
+
 /** One AI run for the Insights spec, optionally approved as a work order. */
 export type InsightFixture = {
   status: "succeeded" | "failed";
