@@ -46,6 +46,7 @@ const draft: TriageResponse = {
       note: "Left in service because it is safe to operate.",
     },
   ],
+  runId: null,
 };
 
 let assetId: string;

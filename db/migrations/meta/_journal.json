@@ -8,6 +8,13 @@
       "when": 1794370642361,
       "tag": "0000_fixed_brood",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794454366310,
+      "tag": "0001_glossy_darkhawk",
+      "breakpoints": true
     }
   ]
 }

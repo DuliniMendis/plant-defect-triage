@@ -20,6 +20,7 @@
     "e2e:clean": "tsx scripts/e2e-temp-assets.ts clean"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "4.0.139",
     "@neondatabase/serverless": "^1.2.0",
     "@vercel/blob": "^2.9.0",
     "ai": "^7.0.166",

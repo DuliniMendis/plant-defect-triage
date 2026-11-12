@@ -3,6 +3,7 @@ import {
   date,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -23,6 +24,7 @@ export const historyKinds = [
   "work-order",
 ] as const;
 export const entryStatuses = ["open", "closed"] as const;
+export const runStatuses = ["succeeded", "failed"] as const;
 
 const newId = () => crypto.randomUUID();
 
@@ -56,6 +58,34 @@ export const workOrders = pgTable("work_orders", {
   changedFields: jsonb("changed_fields").$type<string[]>().notNull().default([]),
   // Model that produced the draft; empty for a manual work order.
   model: text("model"),
+  // The AI run whose draft was approved; empty for a manual work order
+  // (R40, data model draft 3).
+  aiRunId: text("ai_run_id")
+    .unique()
+    .references(() => aiRuns.id, { onDelete: "set null" }),
+});
+
+// One row per AI draft request, succeeded or failed (R39, technical plan v3).
+// Measurements only: no notes, photos or draft content.
+export const aiRuns = pgTable("ai_runs", {
+  id: text("id").primaryKey().$defaultFn(newId),
+  assetId: text("asset_id")
+    .notNull()
+    .references(() => assets.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  model: text("model").notNull(),
+  status: text("status", { enum: runStatuses }).notNull(),
+  // A short code such as "model-call" when the run failed; never the error text.
+  errorKind: text("error_kind"),
+  durationMs: integer("duration_ms").notNull(),
+  inputTokens: integer("input_tokens"),
+  outputTokens: integer("output_tokens"),
+  // US dollars from AI Gateway, filled in after the response. Empty means
+  // not known yet, not zero.
+  costUsd: numeric("cost_usd", { precision: 12, scale: 8, mode: "number" }),
+  generationId: text("generation_id"),
 });
 
 export const historyEntries = pgTable("history_entries", {
@@ -92,3 +122,5 @@ export type Asset = typeof assets.$inferSelect;
 export type HistoryEntry = typeof historyEntries.$inferSelect;
 export type WorkOrder = typeof workOrders.$inferSelect;
 export type WorkOrderPhoto = typeof workOrderPhotos.$inferSelect;
+export type AiRun = typeof aiRuns.$inferSelect;
+export type RunStatus = (typeof runStatuses)[number];

@@ -1,16 +1,17 @@
 import { getAsset } from "@/db/queries";
-import { insertWorkOrder, UnknownAssetError } from "@/db/work-orders";
+import { insertWorkOrder, InvalidAiRunError, UnknownAssetError } from "@/db/work-orders";
 import { getPhotoStore } from "@/lib/photo-store";
 import { parseWorkOrderForm, saveWorkOrder } from "./_lib/save-work-order";
 
 // POST /api/work-orders: saves an approved work order (technical plan v2,
 // section 5). The body is multipart: a `payload` field with
-// `{ assetId, notes, aiDraft, final, model }` as JSON, and up to 3 `photos`.
+// `{ assetId, notes, aiDraft, final, model, aiRunId }` as JSON, and up to 3 `photos`.
 // Photos are uploaded first; then the work order, its history entry, photo
 // rows and any status change are written in one transaction. If that fails,
 // the uploaded photos are deleted (R27).
 //
-// Discard never calls this route, so it leaves nothing behind (R21).
+// Discard never calls this route, so it creates no work order. The AI run
+// recorded by POST /api/triage stays, with no work order linked (R21, R40).
 export async function POST(request: Request) {
   let form: FormData;
   try {
@@ -39,6 +40,9 @@ export async function POST(request: Request) {
   } catch (cause) {
     if (cause instanceof UnknownAssetError) {
       return error(400, `There is no asset ${parsed.request.assetId}.`);
+    }
+    if (cause instanceof InvalidAiRunError) {
+      return error(400, "The AI draft this work order came from could not be found. Draft it again.");
     }
     console.error("Saving a work order failed", cause);
     return error(

@@ -116,6 +116,7 @@ export function buildRecord({
       final,
       changedFields: changedFields(request.aiDraft, final),
       model: request.model,
+      aiRunId: request.aiRunId,
     },
     historyEntry: {
       id: historyEntryId,

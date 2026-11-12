@@ -361,12 +361,13 @@ const triage: TriageResponse = {
       note: "From the work order “Replace boom cylinder hose” approved 1 Nov 2026.",
     },
   ],
+  runId: null,
 };
 
 function triageThenSave() {
   return vi.fn(async (url: string) =>
     url === "/api/triage"
-      ? Response.json(triage)
+      ? Response.json({ ...triage, runId: "run-1" })
       : Response.json({ workOrderId: "wo-1" }, { status: 201 }),
   );
 }
@@ -429,6 +430,8 @@ test("approving an edited AI draft sends both the AI draft and the approved vers
   expect(url).toBe("/api/work-orders");
   const payload = JSON.parse((init.body as FormData).get("payload") as string);
   expect(payload.model).toBe("anthropic/claude-sonnet-5.5");
+  // Links the work order to the AI run that drafted it (R40).
+  expect(payload.aiRunId).toBe("run-1");
   expect(payload.aiDraft).toEqual(triage.draft);
   expect(payload.final.issue.severity).toBe("critical");
   expect(payload.final.photoObservations).toEqual(triage.draft.photoObservations);

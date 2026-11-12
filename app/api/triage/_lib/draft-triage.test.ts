@@ -63,7 +63,7 @@ const run = (model: MockLanguageModelV4, clarifications: { question: string; ans
 
 test("returns a full draft with the fields filled from rules listed", async () => {
   vi.spyOn(console, "info").mockImplementation(() => {});
-  const result = await run(mockModel(JSON.stringify(aiFill())));
+  const { triage: result } = await run(mockModel(JSON.stringify(aiFill())));
 
   expect(result.model).toBe("mock-model");
   expect(result.durationMs).toBe(8500);
@@ -97,16 +97,80 @@ test("puts cache breakpoints after the system prompt and after the asset's recor
   expect(photo).toMatchObject({ type: "file", mediaType: "image/jpeg" });
 });
 
+test("measures the run: model asked, tokens, time and outcome", async () => {
+  vi.spyOn(console, "info").mockImplementation(() => {});
+  const { measurement } = await run(mockModel(JSON.stringify(aiFill())));
+  expect(measurement).toEqual({
+    model: "mock-model",
+    status: "succeeded",
+    errorKind: null,
+    durationMs: 8500,
+    inputTokens: 5000,
+    outputTokens: 900,
+    generationId: null,
+  });
+});
+
+test("tags the request for AI Gateway Logs", async () => {
+  vi.spyOn(console, "info").mockImplementation(() => {});
+  const model = mockModel(JSON.stringify(aiFill()));
+  await run(model);
+  expect(model.doGenerateCalls[0].providerOptions).toMatchObject({
+    gateway: { tags: ["triage-draft"] },
+  });
+});
+
 test("a model that returns something unreadable is reported as a failed draft", async () => {
-  await expect(run(mockModel("not json"))).rejects.toBeInstanceOf(TriageFailedError);
+  const failure = await run(mockModel("not json")).catch((e: unknown) => e);
+  expect(failure).toBeInstanceOf(TriageFailedError);
+  // The unusable response was still paid for, so its tokens are kept.
+  expect((failure as TriageFailedError).measurement).toMatchObject({
+    status: "failed",
+    errorKind: "invalid-output",
+    durationMs: 8500,
+    inputTokens: 5000,
+    outputTokens: 900,
+  });
+});
+
+test("a model call that throws is measured as a failed run with no tokens", async () => {
+  const model = new MockLanguageModelV4({
+    modelId: "mock-model",
+    doGenerate: async () => {
+      throw new Error("provider down");
+    },
+  });
+  const failure = await draftTriage({
+    model,
+    asset,
+    history,
+    pastWorkOrders: [],
+    notes: "Oil dripping",
+    photos: [],
+    now: vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(1200),
+  }).catch((e: unknown) => e);
+  expect((failure as TriageFailedError).measurement).toEqual({
+    model: "mock-model",
+    status: "failed",
+    errorKind: "model-call",
+    durationMs: 1200,
+    inputTokens: null,
+    outputTokens: null,
+    generationId: null,
+  });
 });
 
 test("a draft that fails the triage schema is reported as a failed draft", async () => {
   vi.spyOn(console, "info").mockImplementation(() => {});
   // An empty title passes the model's schema but not the saved one.
-  await expect(run(mockModel(JSON.stringify(aiFill({ title: "  " }))))).rejects.toBeInstanceOf(
-    TriageFailedError,
+  const failure = await run(mockModel(JSON.stringify(aiFill({ title: "  " })))).catch(
+    (e: unknown) => e,
   );
+  expect(failure).toBeInstanceOf(TriageFailedError);
+  expect((failure as TriageFailedError).measurement).toMatchObject({
+    errorKind: "incomplete-draft",
+    inputTokens: 5000,
+  });
 });
 
 test("a re-draft sends the reviewer's answer after the cached records, with the same notes and photos", async () => {
