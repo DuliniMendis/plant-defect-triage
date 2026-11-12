@@ -24,8 +24,10 @@ import {
 } from "@/lib/schema";
 import { requestTriage } from "../_lib/request-triage";
 import { resizePhoto } from "../_lib/resize-photo";
+import { appendTranscript } from "../_lib/speech";
 import { submitWorkOrder } from "../_lib/submit-work-order";
 import { blankValues, valuesFromDraft, type FormValues } from "../_lib/work-order-form";
+import { NotesField } from "./notes-field";
 import { RequiredMark } from "./required-mark";
 import { WorkOrderForm } from "./work-order-form";
 
@@ -46,9 +48,9 @@ type Step =
   | { name: "review" }
   | { name: "saved"; title: string };
 
-// Defect capture (R7, R9, R10): a required notes box and up to 3 optional
-// photos by file picker or drag and drop, with a preview and remove button
-// for each. Voice dictation (milestone 5) will write into the same notes box.
+// Defect capture (R7, R8, R9, R10): a required notes box that takes typing
+// and voice dictation, and up to 3 optional photos by file picker or drag and
+// drop, with a preview and remove button for each.
 // "Draft with AI" sends the report for an AI draft that fills the issue and
 // work order form (R12 to R20); "Fill in by hand" opens the same form empty,
 // and is also the way on when the AI call fails (requirements section 7).
@@ -271,7 +273,7 @@ export function DefectCapture({ assetId }: { assetId: string }) {
         Report a defect
       </h2>
       <p className="mt-1 text-sm text-text-muted">
-        Describe the defect in the notes, and add up to {MAX_PHOTOS} photos if
+        Describe the defect in the notes, by typing or dictating, and add up to {MAX_PHOTOS} photos if
         you have them.{" "}
         <span className="whitespace-nowrap">
           <RequiredMark /> Required
@@ -404,28 +406,20 @@ export function DefectCapture({ assetId }: { assetId: string }) {
           )}
         </fieldset>
 
-        <div>
-          <label
-            htmlFor={notesId}
-            className={`text-sm font-semibold ${missing ? "text-status-down" : ""}`}
-          >
-            Notes <RequiredMark />
-          </label>
-          <textarea
-            id={notesId}
-            aria-required="true"
-            aria-invalid={missing || undefined}
-            aria-describedby={missing ? errorId : undefined}
-            value={notes}
-            onChange={(e) => {
-              setNotes(e.target.value);
-              if (e.target.value.trim()) setError("");
-            }}
-            rows={5}
-            placeholder="What did you see, hear or smell? Where on the machine? When did it start?"
-            className="mt-2 block w-full rounded-md border border-line bg-surface px-3 py-2 text-text placeholder:text-text-muted focus:border-ink focus-visible:outline-2 focus-visible:outline-ink aria-invalid:border-status-down"
-          />
-        </div>
+        <NotesField
+          id={notesId}
+          value={notes}
+          onChange={(value) => {
+            setNotes(value);
+            if (value.trim()) setError("");
+          }}
+          onDictate={(words) => {
+            setNotes((current) => appendTranscript(current, words));
+            setError("");
+          }}
+          invalid={missing}
+          errorId={errorId}
+        />
 
         {error && (
           <p id={errorId} role="alert" className="text-sm font-semibold text-status-down">
