@@ -1,6 +1,6 @@
 # Notice
 
-Plant Defect Triage is an independent concept demo built for a job interview. It is not a Sitemate product and is not affiliated with, endorsed by or sponsored by Sitemate.
+Plant Defect Triage is an independent concept demo. It is not affiliated with, endorsed by or sponsored by any company.
 
 ## What this repository contains
 
@@ -11,7 +11,5 @@ Plant Defect Triage is an independent concept demo built for a job interview. It
 
 ## What it does not contain
 
-- Sitemate code, data, confidential material or brand assets (logos, typefaces, screenshots).
-- Any connection to a Sitemate system.
-
-Sitemate, Dashpivot, Gearbelt, Flowsite and Storm are names of Sitemate's products. They appear only to describe what the concept relates to.
+- Any other company's code, data, confidential material or brand assets (logos, typefaces, screenshots).
+- Any connection to another company's systems.

@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Plant Defect Triage",
   description:
-    "A concept for Gearbelt: report a plant defect, get an AI-drafted triage, approve a work order. Independent interview demo.",
+    "Concept demo: report a plant defect, get an AI-drafted triage, approve a work order.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

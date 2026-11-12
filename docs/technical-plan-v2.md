@@ -1,6 +1,6 @@
 # Plant Defect Triage — Technical Plan
 
-A concept for Sitemate's Gearbelt. Named "Gearbelt Defect Triage" in version 1.
+A concept for a plant maintenance product. Named after that product in version 1.
 
 Status: Version 2 (11 Nov 2026). Implements [requirements version 3](requirements-v3.md). Revised from [version 1](technical-plan.md). Nothing in this plan is built yet.
 
@@ -78,7 +78,7 @@ flowchart LR
 | QR reading | `jsqr` on a canvas drawn from the uploaded image | Runs in the browser |
 | QR images | Generated once by a script using `qrcode`, saved as PNG files | Encodes the asset ID |
 | Hosting | Vercel | |
-| Styling | Black and yellow theme, defined as colour tokens in one place | No Sitemate brand assets (R30). Sitemate's site blocked automated reading, so its current colours are unverified; compare by eye before recording |
+| Styling | Black and yellow theme, defined as colour tokens in one place | No vendor brand assets (R30). The vendor's site blocked automated reading, so its current colours are unverified; compare by eye before recording |
 | Repository | Private GitHub repository | Created as private from the start (R31). Needs your GitHub sign-in |
 
 One database is used for both local development and the deployed app, to keep the demo simple.
@@ -147,7 +147,7 @@ erDiagram
   }
 ```
 
-- Keeping both `ai_draft` and `final` satisfies R22 and makes it possible to show how often reviewers overrule the AI, which is a useful point for the interview.
+- Keeping both `ai_draft` and `final` satisfies R22 and makes it possible to show how often reviewers overrule the AI, which is a useful point for the demo.
 - The `seeded` flag lets the seed script restore the starting state without touching the schema.
 
 ### Triage draft
@@ -322,12 +322,12 @@ Deploying publishes the app at a public URL. I will ask before the first deploy.
 
 | Risk | Mitigation |
 |---|---|
-| The public URL has no login, so anyone who finds it can write work orders and spend AI credit | Keep the URL unshared until the interview; set a spend limit on AI Gateway; the seed script restores clean data. A shared passcode can be added if you want one |
+| The public URL has no login, so anyone who finds it can write work orders and spend AI credit | Keep the URL unshared until the demo is shown; set a spend limit on AI Gateway; the seed script restores clean data. A shared passcode can be added if you want one |
 | Speech recognition mishears plant terms | The transcript is editable (R8); typed notes always work |
 | The model flags a repeat that is not one | Server-side check of history IDs; reviewer sees the linked entries beside the claim |
 | Slow responses with three large photos | Resize in the browser; show progress; measure in step 8 |
 | Sample photos are unconvincing or wrongly licensed | Use only AI-generated or CC0 images with a credits file (section 13); review each at full size before step 8 |
-| The demo is mistaken for a Sitemate product, or raises an IP concern | Private repository, disclaimers in the README and on every screen, a neutral app name, no Sitemate brand assets (section 13) |
+| The demo is mistaken for a vendor's product, or raises an IP concern | Private repository, disclaimers in the README and on every screen, a neutral app name, no vendor brand assets (section 13) |
 | Data from earlier takes shows up in a recording | Run the seed script before each take |
 | Database setup stalls on an account or browser step | It is step 2, so it surfaces before any feature work depends on it |
 | Next.js 16 and AI SDK APIs differ from older versions | Read the bundled docs first (step 1); type-check after every step |
@@ -341,9 +341,9 @@ Added after version 2 was first saved, to record decisions made on 11 Nov 2026.
 - The repository is created as private on GitHub. Nothing is pushed until you confirm.
 - `README.md` opens with the disclaimer from requirements section 5.8.
 - A footer component shows a short form of the disclaimer on every screen.
-- A `NOTICE.md` file lists what the demo does and does not contain: no Sitemate code, data or brand assets; fictional asset data; third-party libraries under their own licences.
+- A `NOTICE.md` file lists what the demo does and does not contain: no vendor code, data or brand assets; fictional asset data; third-party libraries under their own licences.
 - A private repository does not make the deployed app private. Vercel deployment protection is proposed for the URL (the open question in the requirements).
-- The app's name is "Plant Defect Triage", shown with the subtitle "A concept for Gearbelt". The package name, page title and repository name follow it.
+- The app's name is "Plant Defect Triage", shown with a subtitle naming the maintenance product. The package name, page title and repository name follow it.
 
 ### Sample defect photos (R11, R34)
 
@@ -365,4 +365,4 @@ A search of Wikimedia Commons found few photos of defects on plant, and most usa
 
 - Phone layout with live camera capture and live QR scanning.
 - Login, which would also restore approver identity.
-- The same triage draft written back to Gearbelt through its API.
+- The same triage draft written back to the maintenance product through its API.
