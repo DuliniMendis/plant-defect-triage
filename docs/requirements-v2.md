@@ -1,4 +1,4 @@
-# Gearbelt Defect Triage — Requirements
+# Plant Defect Triage — Requirements
 
 Status: Version 2 (11 Nov 2026), revised after review of [version 1](requirements.md)
 
@@ -6,7 +6,7 @@ Status: Version 2 (11 Nov 2026), revised after review of [version 1](requirement
 
 | Area | Version 1 | Version 2 | Why |
 |---|---|---|---|
-| Target devices | Mobile first, laptop also | Desktop and tablet only; phone later | A phone is hard to record for the Loom |
+| Target devices | Mobile first, laptop also | Desktop and tablet only; phone later | A phone is hard to record for the demo video |
 | Browser | Chrome and Safari | Chrome only | Simpler; speech recognition is most reliable in Chrome |
 | QR lookup (R2) | Scan with the phone camera | Upload a saved QR code image through a file picker | Works on a laptop and records cleanly |
 | QR sheet (R3) | Printable page of QR codes | Removed. QR codes are saved as image files instead | No phone scanning in this demo |
@@ -17,25 +17,25 @@ Status: Version 2 (11 Nov 2026), revised after review of [version 1](requirement
 | Model | Not specified | Claude Sonnet 5.5, with Haiku 5.5 compared during testing | Sufficient for the task at lower cost |
 | Sample mode | Canned draft when no key is set | Removed | A real key will be configured; manual entry remains the fallback |
 | Hosting | Open question | Vercel | Decided |
-| Audience | Open question | Sitemate interview | Decided |
+| Audience | Open question | A private demo | Decided |
 
 Requirement numbers are unchanged from version 1 so the two versions can be compared line by line.
 
 ## 1. Purpose
 
-A demo app that shows how AI could extend Sitemate's Storm from Dashpivot into Gearbelt. A mechanic or operator reports a defect on a piece of plant with photos and a voice note. AI drafts the issue, rates its severity, checks the asset's history for repeats, and proposes a work order. A person reviews and approves before anything is saved.
+A demo app that shows how a vendor's AI assistant, available today in its forms product, could be extended into its plant maintenance product. A mechanic or operator reports a defect on a piece of plant with photos and a voice note. AI drafts the issue, rates its severity, checks the asset's history for repeats, and proposes a work order. A person reviews and approves before anything is saved.
 
-The app is for a Sitemate interview. It is the subject of a Loom video about how it was built with AI, so the build process is a deliverable alongside the app (see section 9).
+The app is the subject of a demo video about how it was built with AI, so the build process is a deliverable alongside the app (see section 9).
 
 ## 2. Why this idea
 
-- Storm launched in June 2026 for Dashpivot only. Sitemate says Gearbelt access is "coming soon".
-- Gearbelt already has the pieces this flow connects: QR asset lookup, issues, schedule checks and work orders.
-- Storm's rule is that every AI output is a draft until a human reviews and saves. This demo keeps that rule.
+- The vendor's AI assistant launched in June 2026 for its forms product only. Access from the maintenance product is announced as "coming soon".
+- The maintenance product already has the pieces this flow connects: QR asset lookup, issues, schedule checks and work orders.
+- The AI assistant's rule is that every AI output is a draft until a human reviews and saves. This demo keeps that rule.
 
-What the demo should show an interviewer:
+What the demo should show a viewer:
 
-- An understanding of Sitemate's products and where the AI layer stops today.
+- An understanding of the vendor's products and where the AI layer stops today.
 - Product judgement: a small, complete flow rather than a broad, shallow one.
 - A disciplined way of working with AI: research, requirements, a plan, then a build.
 
@@ -45,7 +45,7 @@ What the demo should show an interviewer:
 |---|---|
 | Operator or mechanic | Report a defect in under a minute without typing much |
 | Maintenance supervisor | A clear, consistent issue and a ready-to-approve work order |
-| Interviewer at Sitemate | To see the flow end to end in about two minutes |
+| Demo viewer | To see the flow end to end in about two minutes |
 
 The practical use is on a phone on site. This demo targets desktop and tablet so it can be recorded; phone support is a later step (see section 10).
 
@@ -131,7 +131,7 @@ Summarised here; detail is in the [technical plan](technical-plan.md).
 
 ## 9. Build-process deliverable
 
-A separate published page, for use in the Loom video, that records:
+A separate published page, for use in the demo video, that records:
 
 - Every prompt used, in order, with what each one produced.
 - Model and settings (Claude Fable 5.2, medium effort, auto permission mode, Claude desktop app Code tab).
@@ -147,18 +147,18 @@ It will only record what actually happened in this session.
 - Login, roles, approver identity and multi-user sync.
 - Offline use.
 - Browsers other than Chrome.
-- Real Gearbelt or Dashpivot integration.
+- Real integration with the vendor's products.
 - Parts inventory, costing and scheduling.
 - Push notifications.
 
 ## 11. Open questions
 
-Resolved since version 1: AI key (Vercel AI Gateway), hosting (Vercel), voice support (Chrome only), audience (Sitemate interview).
+Resolved since version 1: AI key (Vercel AI Gateway), hosting (Vercel), voice support (Chrome only), audience (a private demo).
 
 Still open:
 
 1. **Demo fleet.** Assumed unless you say otherwise: an excavator, a telehandler, a light vehicle and a generator.
-2. **Styling.** Assumed unless you say otherwise: an original look suited to plant maintenance, not a copy of Sitemate's branding.
+2. **Styling.** Assumed unless you say otherwise: an original look suited to plant maintenance, not a copy of the vendor's branding.
 3. **Sample defect photos (R11).** The demo needs real-looking photos of defects, such as a leaking hydraulic hose or a worn tyre. Will you supply them, or should I source freely licensed ones?
 
 ## 12. Acceptance criteria

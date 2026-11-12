@@ -1,6 +1,6 @@
-# Gearbelt Defect Triage — Milestones
+# Plant Defect Triage — Milestones
 
-Status: Draft 1 (11 Nov 2026). Based on [requirements version 3](requirements-v3.md) and [technical plan version 2](technical-plan-v2.md). Nothing is built yet. Loaded into Linear (project Sitemate-demo, DUL-5 to DUL-63) on 11 Nov 2026. This is the source for the Linear tickets: each milestone becomes a parent ticket and each task a sub-ticket.
+Status: Draft 1 (11 Nov 2026). Based on [requirements version 3](requirements-v3.md) and [technical plan version 2](technical-plan-v2.md). Nothing is built yet. Loaded into Linear (the project's Linear project, DUL-5 to DUL-63) on 11 Nov 2026. This is the source for the Linear tickets: each milestone becomes a parent ticket and each task a sub-ticket.
 
 Every milestone ends with something a person can use in the app. Shared setup work is folded into the first milestone that needs it, rather than kept as a milestone with nothing to show.
 
@@ -51,7 +51,7 @@ Deliverable: the home page lists the demo fleet from the database.
 | Create the private GitHub repository | R31. Needs your GitHub sign-in; nothing pushed without confirmation |
 | Database schema and first migration for all four tables | Section 4 of the plan. Done once so later milestones agree on shapes |
 | Seed script with the four assets and their history, including the repeat set-up on the excavator | R29. `pnpm db:seed`; must run cleanly twice |
-| Theme tokens (black and yellow) and app shell | R30. No Sitemate brand assets |
+| Theme tokens (black and yellow) and app shell | R30. No vendor brand assets |
 | Disclaimer footer on every screen; README opening disclaimer | R32, R33 |
 | Fleet page: asset cards with name, ID, site and status | R1, R4 |
 

@@ -1,8 +1,8 @@
 # Plant Defect Triage
 
-A concept for Gearbelt.
+Concept demo.
 
-> **Disclaimer.** This is an independent concept demo built for a job interview. It is not a Sitemate product and is not affiliated with, endorsed by or sponsored by Sitemate. Sitemate, Dashpivot, Gearbelt, Flowsite and Storm are names of Sitemate's products and are used here only to describe the idea. The app was built from publicly available information, contains no Sitemate code, data or brand assets, and uses fictional asset data. Not for commercial use.
+> **Disclaimer.** This is an independent concept demo. It is not affiliated with, endorsed by or sponsored by any company. It was built from publicly available information, contains no other company's code, data or brand assets, and uses fictional asset data. Not for commercial use.
 
 A mechanic or operator reports a defect on a piece of plant with photos and a voice note. AI drafts the issue, rates its severity, checks the asset's history for repeats and proposes a work order. A person reviews and approves before anything is saved.
 

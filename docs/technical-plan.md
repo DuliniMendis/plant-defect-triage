@@ -1,4 +1,4 @@
-# Gearbelt Defect Triage — Technical Plan
+# Plant Defect Triage — Technical Plan
 
 Status: Draft 1 (11 Nov 2026). Implements [requirements version 2](requirements-v2.md). Nothing in this plan is built yet.
 
@@ -263,4 +263,4 @@ Deploying publishes the app at a public URL. I will ask before the first deploy.
 
 - Phone layout with live camera capture and live QR scanning.
 - A database and login, which would also restore approver identity.
-- The same triage draft written back to Gearbelt through its API.
+- The same triage draft written back to the maintenance product through its API.
