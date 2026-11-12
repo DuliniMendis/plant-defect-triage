@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { DEFAULT_MODEL, draftTriage } from "@/app/api/triage/_lib/draft-triage";
+import { draftTriage } from "@/app/api/triage/_lib/draft-triage";
 import type { PromptPhoto } from "@/app/api/triage/_lib/prompt";
 import { caseKinds, triageCases, type TriageCase } from "./cases";
 import { loadPhoto, seededAsset, seededHistory } from "./fixtures";
@@ -23,7 +23,7 @@ import { summarise, type RunResult } from "./summary";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
-const DEFAULT_MODELS = [DEFAULT_MODEL, "anthropic/claude-haiku-5.5"];
+const DEFAULT_MODELS = ["anthropic/claude-sonnet-5.5", "anthropic/claude-haiku-5.5"];
 
 // Gateway list prices per million tokens, 11 Nov 2026 (technical plan v2,
 // section 3). Used only for a rough cost line; cache reads cost less.

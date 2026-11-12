@@ -13,7 +13,9 @@ import {
   type PromptPhoto,
 } from "./prompt";
 
-export const DEFAULT_MODEL = "anthropic/claude-sonnet-5.5";
+// Haiku 5.5 matched or beat Sonnet 5.5 on every eval case at a fraction of the
+// cost (docs/evals.md). AI_GATEWAY_MODEL overrides it.
+export const DEFAULT_MODEL = "anthropic/claude-haiku-5.5";
 
 /** The model call failed or returned something unusable. Shown as a 502. */
 export class TriageFailedError extends Error {}

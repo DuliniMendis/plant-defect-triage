@@ -112,4 +112,4 @@ pnpm eval
 pnpm eval --models anthropic/claude-haiku-5.5 --cases repeat,unclear --runs 3
 ```
 
-`--cases` takes case IDs, asset IDs or kinds. Each run prints a line per draft and a summary per model, and saves the full drafts to `evals/results/` (not committed). A full run on both models costs about 20 cents at list price. The model the app uses is set by `AI_GATEWAY_MODEL` (default Sonnet 5.5).
+`--cases` takes case IDs, asset IDs or kinds. Each run prints a line per draft and a summary per model, and saves the full drafts to `evals/results/` (not committed). A full run on both models costs about 20 cents at list price. The model the app uses is set by `AI_GATEWAY_MODEL` (default Haiku 5.5, chosen from the evals).

@@ -47,3 +47,8 @@ Main at M7 (`534ea7c`), with the repeat-check and clarification prompt rules. 12
 | Cost at list price, before cache discount | about $0.54 | about $0.03 |
 
 Sonnet's one miss: on `ex-014-contradicting` (notes say no leaks, the photo shows a leaking hose) it drafted the leak without asking about the contradiction, in one of three runs. Haiku passed every draft, was faster at the median, and cost about one seventeenth as much; its slowest draft (12.5 s) was over the 10-second target.
+
+
+## Decision
+
+Haiku 5.5 is the default model from 12 Nov 2026. It passed all 36 drafts, never under-rated a severity, was faster at the median and cost about one seventeenth as much as Sonnet. The one slow draft (12.5 s) is the risk to watch on the live URL; `AI_GATEWAY_MODEL=anthropic/claude-sonnet-5.5` switches back without a code change.
