@@ -96,12 +96,52 @@ export const workOrderRequestSchema = z
     aiDraft: triageDraftSchema.nullable(),
     final: triageDraftSchema,
     model: z.string().min(1).nullable(),
+    // The AI run that produced `aiDraft` (R40). Empty for a manual entry, and
+    // for an AI draft whose run could not be recorded.
+    aiRunId: z.string().min(1).nullable().default(null),
   })
   // An AI draft always comes with the model that wrote it, and a manual
   // work order has neither (data model draft 2).
   .refine((r) => (r.aiDraft === null) === (r.model === null), {
     message: "An AI draft needs its model, and a manual entry has neither.",
     path: ["model"],
+  })
+  .refine((r) => r.aiRunId === null || r.aiDraft !== null, {
+    message: "Only an AI draft has an AI run.",
+    path: ["aiRunId"],
   });
 
 export type WorkOrderRequest = z.infer<typeof workOrderRequestSchema>;
+export type WorkOrderRequestInput = z.input<typeof workOrderRequestSchema>;
+
+// The response of POST /api/triage (technical plan v2, section 5). The AI is
+// asked only for the fields that need judgement. `filled` lists the fields the
+// server set from the asset's records or from a fixed rule instead, with a
+// short note saying where each came from, so the form can show it.
+export const filledSources = ["records", "rule"] as const;
+export type FilledSource = (typeof filledSources)[number];
+
+export const filledFieldSchema = z.object({
+  /** Dotted path in the draft, such as "workOrder.priority". */
+  path: z.string(),
+  source: z.enum(filledSources),
+  note: z.string(),
+});
+export type FilledField = z.infer<typeof filledFieldSchema>;
+
+export const triageResponseSchema = z.object({
+  draft: triageDraftSchema,
+  model: z.string().min(1),
+  durationMs: z.number(),
+  filled: z.array(filledFieldSchema),
+  /** The recorded AI run, sent back with the approval (R40). Null if recording failed. */
+  runId: z.string().nullable(),
+});
+export type TriageResponse = z.infer<typeof triageResponseSchema>;
+
+/**
+ * A clarifying question the AI asked about a report, and the reviewer's
+ * answer. Sent back with the original notes and photos for a fresh draft
+ * (R23, technical plan section 6).
+ */
+export type Clarification = { question: string; answer: string };

@@ -34,6 +34,18 @@ export async function workOrderIds(): Promise<Set<string>> {
   return new Set(rows.map((r) => r.id as string));
 }
 
+/** The asset's most recently approved work order, as stored. */
+export async function latestWorkOrder(assetId: string) {
+  const { rows } = await db().query(
+    `select ai_draft, final, changed_fields, model from work_orders
+      where asset_id = $1 order by approved_at desc limit 1`,
+    [assetId],
+  );
+  return rows[0] as
+    | { ai_draft: unknown; final: unknown; changed_fields: string[]; model: string | null }
+    | undefined;
+}
+
 /** Removes the asset's non-seed work orders and their photos, and sets its status back. */
 export async function removeWorkOrders(assetId: string, status: string) {
   const { rows } = await db().query(
@@ -61,4 +73,59 @@ export async function localPhotoFolders(): Promise<string[]> {
     if (files.length > 0) withFiles.push(folder.name);
   }
   return withFiles;
+}
+
+/** One AI run for the Insights spec, optionally approved as a work order. */
+export type InsightFixture = {
+  status: "succeeded" | "failed";
+  durationMs: number;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  costUsd: number | null;
+  workOrder?: { aiDraft: unknown; final: unknown; changedFields: string[] };
+};
+
+/**
+ * Adds AI runs, and the work orders approved from them, under a model name
+ * used only by this test, so the Insights page can be narrowed to exactly
+ * these. They go on a temporary asset, so the clean-up removes them with it.
+ */
+export async function insertInsightRuns(
+  assetId: string,
+  model: string,
+  fixtures: InsightFixture[],
+) {
+  for (const [i, f] of fixtures.entries()) {
+    const runId = crypto.randomUUID();
+    await db().query(
+      `insert into ai_runs (id, asset_id, created_at, model, status, error_kind, duration_ms,
+         input_tokens, output_tokens, cost_usd)
+       values ($1, $2, now() - ($3 || ' minutes')::interval, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        runId, assetId, String(fixtures.length - i), model, f.status,
+        f.status === "failed" ? "model-call" : null,
+        f.durationMs, f.inputTokens, f.outputTokens, f.costUsd,
+      ],
+    );
+    if (f.workOrder) {
+      await db().query(
+        `insert into work_orders (id, asset_id, notes, ai_draft, final, changed_fields, model, ai_run_id)
+         values ($1, $2, 'E2E insights', $3, $4, $5, $6, $7)`,
+        [
+          crypto.randomUUID(), assetId, JSON.stringify(f.workOrder.aiDraft),
+          JSON.stringify(f.workOrder.final), JSON.stringify(f.workOrder.changedFields),
+          model, runId,
+        ],
+      );
+    }
+  }
+}
+
+/** Removes what `insertInsightRuns` added for one model. */
+export async function removeInsightRuns(model: string) {
+  await db().query(
+    "delete from work_orders where ai_run_id in (select id from ai_runs where model = $1)",
+    [model],
+  );
+  await db().query("delete from ai_runs where model = $1", [model]);
 }

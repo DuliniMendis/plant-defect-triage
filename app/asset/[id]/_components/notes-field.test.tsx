@@ -102,7 +102,7 @@ test("dictated words appear in the notes and can be corrected by typing", async 
   await user.type(notes, "Oil under the boom");
   expect(notes).toHaveValue("Oil under the boom");
 
-  await user.click(screen.getByRole("button", { name: "Continue" }));
+  await user.click(screen.getByRole("button", { name: "Fill in by hand" }));
   expect(
     screen.getByRole("form", { name: "Issue and work order" }),
   ).toBeInTheDocument();
@@ -130,7 +130,7 @@ test("dictating again adds to the notes", async () => {
 
 test("dictated notes clear the 'notes required' error", async () => {
   const { user, dictate } = setup();
-  await user.click(screen.getByRole("button", { name: "Continue" }));
+  await user.click(screen.getByRole("button", { name: "Fill in by hand" }));
   expect(screen.getByRole("alert")).toBeInTheDocument();
 
   await user.click(dictate());
@@ -165,7 +165,7 @@ test("stops listening when the report is continued", async () => {
   recognition.begin();
   recognition.hear("tyre cut", true);
 
-  await user.click(screen.getByRole("button", { name: "Continue" }));
+  await user.click(screen.getByRole("button", { name: "Fill in by hand" }));
   expect(recognition.abort).toHaveBeenCalled();
 });
 

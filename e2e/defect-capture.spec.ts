@@ -17,14 +17,14 @@ const panel = (page: Page) =>
   page.getByRole("region", { name: "Report a defect" });
 
 test("needs notes before continuing", async ({ page }) => {
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Fill in by hand" }).click();
   await expect(panel(page).getByRole("alert")).toHaveText(
     "Type some notes about the defect before continuing.",
   );
 
   await page.getByRole("textbox", { name: "Notes" }).fill("Oil under the boom");
   await expect(panel(page).getByRole("alert")).toBeHidden();
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Fill in by hand" }).click();
   await expect(page.getByRole("form", { name: "Issue and work order" })).toBeVisible();
   await expect(page.getByText("Oil under the boom")).toBeVisible();
 });
@@ -60,10 +60,10 @@ test("adds, previews, resizes and removes sample photos", async ({ page }) => {
     page.getByRole("img", { name: "Photo 1: generator-battery-corrosion.jpg" }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Fill in by hand" }).click();
   await expect(panel(page).getByRole("alert")).toBeVisible();
   await page.getByRole("textbox", { name: "Notes" }).fill("Battery terminal corroded");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Fill in by hand" }).click();
   await expect(
     page.getByRole("list", { name: "Report photos" }).getByRole("img"),
   ).toHaveCount(1);

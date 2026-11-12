@@ -8,12 +8,14 @@ import {
   workOrderCount,
   workOrderIds,
 } from "./support/db";
+import { tempAssetFor } from "./support/temp-assets";
 
 // Work order from issue (M4: R20 to R22, R24 to R28). These tests write to the
 // shared database, so they run after the read-only specs (see
-// playwright.config.ts), each browser project uses its own filler asset (not
-// one of the four demo assets), and each test removes what it created.
-const assetFor = (project: string) => (project.startsWith("tablet") ? "SS-008" : "LT-002");
+// playwright.config.ts), each browser project uses its own temporary asset
+// made for this run (e2e/support/temp-assets.ts), and each test removes what
+// it created. The temporary assets are removed after the run.
+const assetFor = (project: string) => tempAssetFor("WO", project);
 
 // Tests on the same asset would see each other's work orders, and one test's
 // clean-up could remove another's, so this file runs in order within each
@@ -41,7 +43,7 @@ async function reportAndFill(page: Page, title: string) {
   await page.getByLabel("Add photos").setInputFiles(photo("telehandler-tyre-cut.jpg"));
   await expect(page.getByRole("img", { name: /^Photo 1:/ })).toBeVisible();
   await page.getByRole("textbox", { name: "Notes" }).fill("Deep cut in the front left tyre");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Fill in by hand" }).click();
 
   const form = page.getByRole("form", { name: "Issue and work order" });
   await form.getByRole("textbox", { name: "Title", exact: true }).fill("Cut in front left tyre");

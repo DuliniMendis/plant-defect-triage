@@ -81,7 +81,7 @@ test.describe("with speech recognition", () => {
     await expect(page.getByRole("button", { name: "Dictate" })).toBeEnabled();
   });
 
-  test("dictates a note, corrects it by typing and continues", async ({ page }) => {
+  test("dictates a note, corrects it by typing and fills in the form", async ({ page }) => {
     const notes = page.getByRole("textbox", { name: "Notes" });
 
     await page.getByRole("button", { name: "Dictate" }).click();
@@ -112,7 +112,7 @@ test.describe("with speech recognition", () => {
     await page.getByRole("button", { name: "Stop dictating" }).click();
     await expect(notes).toHaveValue("Oil leaking from the boom ram started this morning");
 
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Fill in by hand" }).click();
     await expect(page.getByRole("form", { name: "Issue and work order" })).toBeVisible();
     await expect(
       page.getByText("Oil leaking from the boom ram started this morning"),
