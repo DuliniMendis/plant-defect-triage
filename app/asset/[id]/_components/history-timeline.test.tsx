@@ -1,7 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import type { HistoryEntry } from "@/db/schema";
 import { HistoryTimeline } from "./history-timeline";
+
+vi.mock("../_lib/delete-issue", () => ({ deleteIssue: vi.fn() }));
 
 function entry(overrides: Partial<HistoryEntry>): HistoryEntry {
   return {
@@ -120,4 +122,21 @@ test("shows the photos saved with a work order on its entry (R24, R28)", () => {
   );
   expect(within(photos).getAllByRole("img")).toHaveLength(2);
   expect(screen.queryAllByRole("list", { name: /^Photos for/ })).toHaveLength(1);
+});
+
+test("offers Delete on issues and work orders only", () => {
+  render(
+    <HistoryTimeline
+      entries={[
+        ...entries,
+        entry({ id: "h-wo", kind: "work-order", title: "Replace boom hose", workOrderId: "wo-1" }),
+      ]}
+    />,
+  );
+
+  expect(
+    screen.getByRole("button", { name: "Delete Hydraulic hose weeping at boom cylinder" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Delete Replace boom hose" })).toBeInTheDocument();
+  expect(screen.getAllByRole("button", { name: /^Delete / })).toHaveLength(2);
 });

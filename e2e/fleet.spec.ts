@@ -37,14 +37,18 @@ test("the fleet page lists every asset in the database, a page at a time", async
   expect(seen).toEqual(sorted);
 });
 
+// Uses this run's temporary history asset, not a seeded one: demo use of the
+// shared database can change a seeded asset's status (for example, approving a
+// work order that takes it out of service), and this test must not depend on it.
 test("each row shows the asset's ID, name, site and status", async ({ page }) => {
-  await page.goto("/?q=EX-014");
+  const asset = tempHistoryAsset();
+  await page.goto(`/?q=${asset.id}`);
   const row = rows(page);
   await expect(row).toHaveCount(1);
-  await expect(row).toContainText("EX-014");
-  await expect(row).toContainText("20t Excavator");
-  await expect(row).toContainText("Caterpillar 320");
-  await expect(row).toContainText("Riverside Quarry");
+  await expect(row).toContainText(asset.id);
+  await expect(row).toContainText(asset.name);
+  await expect(row).toContainText("Test E2E");
+  await expect(row).toContainText("E2E test site");
   await expect(row).toContainText("Operational");
 });
 

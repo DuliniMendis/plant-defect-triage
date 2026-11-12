@@ -23,7 +23,7 @@ export const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
  * known history for the read-only specs (HIST), so they do not depend on the
  * state of the shared demo fleet.
  */
-export const tempSlots = ["WO-D", "WO-T", "AI-D", "AI-T", "HIST", "INS"] as const;
+export const tempSlots = ["WO-D", "WO-T", "AI-D", "AI-T", "DEL-D", "DEL-T", "HIST", "INS"] as const;
 export type TempSlot = (typeof tempSlots)[number];
 
 /** Where `pnpm e2e:seed` records the current run's tag for the tests and clean-up. */
@@ -96,7 +96,7 @@ export function currentTempAssetIds(): string[] {
 }
 
 /** The temporary asset a write spec uses in a browser project. */
-export function tempAssetFor(spec: "WO" | "AI", project: string): string {
+export function tempAssetFor(spec: "WO" | "AI" | "DEL", project: string): string {
   const tag = currentRunTag();
   if (!tag) currentTempAssetIds(); // throws the explanation
   const slot = `${spec}-${project.startsWith("tablet") ? "T" : "D"}` as TempSlot;

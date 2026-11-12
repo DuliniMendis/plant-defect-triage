@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import type { HistoryEntry } from "@/db/schema";
 import { formatDate, formatHours, kindLabels } from "../_lib/format";
+import { isDeletable } from "../_lib/issue-kinds";
+import { DeleteIssueButton } from "./delete-issue-button";
 import { HistoryItemFrame } from "./linked-history";
 import { WorkOrderPhotos } from "./work-order-photos";
 
@@ -36,7 +38,12 @@ export function HistoryTimeline({
       aria-labelledby="history-heading"
       className="rounded-lg border border-line bg-surface p-5 shadow-sm"
     >
-      <h2 id="history-heading" className="text-lg font-semibold">
+      {/* Focusable so focus can return here after an issue is deleted. */}
+      <h2
+        id="history-heading"
+        tabIndex={-1}
+        className="text-lg font-semibold focus:outline-none"
+      >
         History
       </h2>
       {entries.length === 0 ? (
@@ -77,6 +84,14 @@ function HistoryItem({
         <span className="text-text-muted">
           {entry.status === "open" ? "Open" : "Closed"}
         </span>
+        {isDeletable(entry.kind) ? (
+          <DeleteIssueButton
+            assetId={entry.assetId}
+            entryId={entry.id}
+            title={entry.title}
+            hasWorkOrder={entry.workOrderId !== null}
+          />
+        ) : null}
       </div>
       <h3 className="mt-2 font-medium">{entry.title}</h3>
       {entry.detail ? (

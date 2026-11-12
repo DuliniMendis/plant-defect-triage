@@ -18,6 +18,8 @@ vi.mock("../_lib/resize-photo", () => ({
 }));
 
 const refresh = vi.fn();
+// The timeline's Delete buttons call a Server Action, which reaches the database.
+vi.mock("../_lib/delete-issue", () => ({ deleteIssue: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
 let urlCount = 0;
