@@ -8,6 +8,14 @@ export function SiteHeader() {
           Plant Defect Triage
         </Link>
         <span className="text-sm text-ink-muted">Concept demo</span>
+        <nav aria-label="Main" className="ml-auto">
+          <Link
+            href="/insights"
+            className="text-sm font-medium text-ink-muted hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            Insights
+          </Link>
+        </nav>
       </div>
     </header>
   );

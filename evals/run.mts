@@ -92,14 +92,14 @@ const results: RunResult[] = await pool(jobs, concurrency, async ({ model, c, ru
       notes: c.notes,
       photos: casePhotos,
     });
-    const score = scoreDraft(response.draft, c.expect, { photoCount: casePhotos.length });
+    const score = scoreDraft(response.triage.draft, c.expect, { photoCount: casePhotos.length });
     const result: RunResult = {
       model,
       caseId: c.id,
       run,
-      durationMs: response.durationMs,
+      durationMs: response.triage.durationMs,
       score,
-      draft: response.draft,
+      draft: response.triage.draft,
     };
     console.log(line(result));
     return result;

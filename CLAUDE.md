@@ -2,7 +2,7 @@
 
 # Project conventions
 
-Plant Defect Triage, a concept demo. Requirements and plans are in `docs/` (latest: `requirements-v5.md`, `technical-plan-v2.md`, `data-model-v2.md`, `milestones.md`).
+Plant Defect Triage, a concept demo. Requirements and plans are in `docs/` (latest: `requirements-v6.md`, `technical-plan-v3.md`, `data-model-v3.md`, `milestones-v2.md`; the newest versions of requirements, plan and milestones list only their changes from the version before).
 
 ## Where components go
 

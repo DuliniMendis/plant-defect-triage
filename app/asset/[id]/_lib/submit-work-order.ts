@@ -1,4 +1,4 @@
-import type { TriageDraft, WorkOrderRequest } from "@/lib/schema";
+import type { TriageDraft, WorkOrderRequestInput } from "@/lib/schema";
 
 // Sends an approved work order to POST /api/work-orders, with its photos as
 // files in the same multipart request (technical plan v2, section 5).
@@ -15,6 +15,7 @@ export async function submitWorkOrder({
   notes,
   aiDraft = null,
   model = null,
+  aiRunId = null,
   final,
   photos,
 }: {
@@ -22,10 +23,12 @@ export async function submitWorkOrder({
   notes: string;
   aiDraft?: TriageDraft | null;
   model?: string | null;
+  /** The AI run that produced `aiDraft` (R40). */
+  aiRunId?: string | null;
   final: TriageDraft;
   photos: readonly Blob[];
 }): Promise<SubmitResult> {
-  const payload: WorkOrderRequest = { assetId, notes, aiDraft, final, model };
+  const payload: WorkOrderRequestInput = { assetId, notes, aiDraft, final, model, aiRunId };
   const body = new FormData();
   body.set("payload", JSON.stringify(payload));
   photos.forEach((photo, index) => {
