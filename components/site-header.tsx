@@ -7,7 +7,7 @@ export function SiteHeader() {
         <Link href="/" className="text-xl font-bold tracking-tight text-accent">
           Plant Defect Triage
         </Link>
-        <span className="text-sm text-ink-muted">A concept for Gearbelt</span>
+        <span className="text-sm text-ink-muted">Concept demo</span>
         <nav aria-label="Main" className="ml-auto">
           <Link
             href="/insights"

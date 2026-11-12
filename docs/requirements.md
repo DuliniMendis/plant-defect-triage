@@ -1,18 +1,17 @@
-# Gearbelt Defect Triage — Requirements
+# Plant Defect Triage — Requirements
 
 Status: Draft 1 (11 Nov 2026), awaiting review
 
 ## 1. Purpose
 
-A demo app that shows how AI could extend Sitemate's Storm from Dashpivot into Gearbelt. A mechanic or operator reports a defect on a piece of plant with a photo and a voice note. AI drafts the issue, rates its severity, checks the asset's history for repeats, and proposes a work order. A person reviews and approves before anything is saved.
+A demo app that shows how AI could fit into an asset maintenance workflow (QR asset lookup, issues, schedule checks, work orders). A mechanic or operator reports a defect on a piece of plant with a photo and a voice note. AI drafts the issue, rates its severity, checks the asset's history for repeats, and proposes a work order. A person reviews and approves before anything is saved.
 
-The app is also the subject of a Loom video about how it was built with AI, so the build process is a deliverable alongside the app (see section 9).
+The app is also the subject of a demo video about how it was built with AI, so the build process is a deliverable alongside the app (see section 9).
 
 ## 2. Why this idea
 
-- Storm launched in June 2026 for Dashpivot only. Sitemate says Gearbelt access is "coming soon".
-- Gearbelt already has the pieces this flow connects: QR asset lookup, issues, schedule checks and work orders.
-- Storm's rule is that every AI output is a draft until a human reviews and saves. This demo keeps that rule.
+- Plant and equipment maintenance apps already have the pieces this flow connects: QR asset lookup, issues, schedule checks and work orders.
+- The demo's design rule is that every AI output is a draft until a human reviews and saves.
 
 ## 3. Users
 
@@ -20,7 +19,7 @@ The app is also the subject of a Loom video about how it was built with AI, so t
 |---|---|
 | Operator or mechanic on site | Report a defect in under a minute, on a phone, without typing much |
 | Maintenance supervisor | A clear, consistent issue and a ready-to-approve work order |
-| Demo audience (Sitemate) | To see the flow end to end in about two minutes |
+| Demo viewer | To see the flow end to end in about two minutes |
 
 ## 4. Core flow
 
@@ -83,7 +82,7 @@ The AI receives the photos, the notes and the asset's profile and history. It re
 ## 7. Non-functional requirements
 
 - **Mobile first.** Designed for a phone held in one hand, large touch targets. Works on a laptop too.
-- **No native app.** A responsive web app, matching the Gearbelt Mobile Web app.
+- **No native app.** A responsive web app.
 - **Speed.** A draft should come back in roughly 10 seconds or less.
 - **Failure handling.** If the AI call fails, the reviewer can retry or fill in the form by hand.
 - **Demo safety.** A sample mode returns a clearly labelled canned draft when no AI key is configured.
@@ -103,7 +102,7 @@ Already in place: an empty Next.js scaffold with the Anthropic SDK and QR librar
 
 ## 9. Build-process deliverable
 
-A separate published page, for use in the Loom video, that records:
+A separate published page, for use in the walkthrough video, that records:
 
 - Every prompt used, in order, with what each one produced.
 - Model and settings (Claude Fable 5.2, medium effort, auto permission mode, Claude desktop app Code tab).
@@ -116,7 +115,7 @@ It will only record what actually happened in this session.
 
 - Login, roles and multi-user sync.
 - Offline use.
-- Real Gearbelt or Dashpivot integration.
+- Integration with a real maintenance system.
 - Parts inventory, costing and scheduling.
 - Push notifications.
 
@@ -126,8 +125,8 @@ It will only record what actually happened in this session.
 2. **Hosting.** Deploy to Vercel so it runs on your phone, or keep it local and demo from the laptop?
 3. **Voice.** Browser speech recognition works in Chrome and Safari but not Firefox. Is that acceptable?
 4. **Asset set.** Proposed demo fleet: an excavator, a telehandler, a light vehicle and a generator. Any you would rather show?
-5. **Branding.** Neutral styling, or styled to sit visually close to Sitemate's products?
-6. **Audience.** Is the Loom for a Sitemate interview, or a general portfolio piece? This changes how much product reasoning the app and build log should show.
+5. **Branding.** Neutral styling, or a specific colour theme?
+6. **Audience.** Who is the demo video for? This changes how much product reasoning the app and build log should show.
 
 ## 12. Acceptance criteria
 

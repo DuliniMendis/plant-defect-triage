@@ -6,9 +6,9 @@ test("every screen shows the app name and the disclaimer", async ({ page }) => {
     await expect(
       page.getByRole("link", { name: "Plant Defect Triage" }),
     ).toBeVisible();
-    await expect(page.getByText("A concept for Gearbelt")).toBeVisible();
+    await expect(page.getByText("Concept demo", { exact: true })).toBeVisible();
     await expect(page.getByRole("contentinfo")).toContainText(
-      "Not a Sitemate product",
+      "fictional asset data",
     );
   }
 });
