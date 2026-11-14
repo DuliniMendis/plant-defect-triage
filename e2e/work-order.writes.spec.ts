@@ -23,7 +23,7 @@ const assetFor = (project: string) => tempAssetFor("WO", project);
 test.describe.configure({ mode: "default" });
 
 const photo = (name: string) =>
-  path.join(__dirname, "..", "demo-files", "photos", name);
+  path.join(__dirname, "..", "public", "demo-files", "photos", name);
 
 let assetId: string;
 let startStatus: string;

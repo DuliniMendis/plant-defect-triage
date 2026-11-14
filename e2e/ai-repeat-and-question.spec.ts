@@ -6,7 +6,7 @@ import type { TriageResponse } from "../lib/schema";
 // The AI call is replaced with fixed responses in the browser, as in
 // ai-draft.writes.spec.ts, so the test is fast, free and repeatable. Nothing is
 // approved, so no data is written. The live model was checked by hand against
-// the sample photos in demo-files/photos.
+// the sample photos in public/demo-files/photos.
 
 const base: TriageResponse["draft"] = {
   issue: {
@@ -106,7 +106,7 @@ test("an unclear report gets a question; the answer is sent back and the draft r
   });
   await page.goto("/asset/EX-014");
   await expect(page.getByLabel("Add photos")).toBeEnabled();
-  await page.getByLabel("Add photos").setInputFiles("demo-files/photos/excavator-unclear.jpg");
+  await page.getByLabel("Add photos").setInputFiles("public/demo-files/photos/excavator-unclear.jpg");
   await expect(page.getByRole("img", { name: /Photo 1/ })).toBeVisible();
   await page.getByRole("textbox", { name: "Notes" }).fill("Oil leak");
   await page.getByRole("button", { name: "Draft with AI" }).click();

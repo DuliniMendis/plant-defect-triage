@@ -20,7 +20,7 @@ export const caseKinds = ["clear", "repeat", "safety", "unclear", "contradicting
 export type CaseKind = (typeof caseKinds)[number];
 
 /**
- * A photo from `demo-files/photos/`. `unclear` makes it blurred, dark and
+ * A photo from `public/demo-files/photos/`. `unclear` makes it blurred, dark and
  * small at run time, standing in for a photo taken badly on site.
  */
 export type CasePhoto = { file: string; unclear?: boolean };

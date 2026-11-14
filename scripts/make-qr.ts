@@ -1,4 +1,4 @@
-// Writes one QR code PNG per seeded asset into demo-files/qr/ (R3). Each code
+// Writes one QR code PNG per seeded asset into public/demo-files/qr/ (R3). Each code
 // holds just the asset ID, which is what the fleet page's "Upload QR code"
 // reads (R2). Also writes a code for an asset that does not exist, to show the
 // "no matching asset" message in the demo.
@@ -11,8 +11,8 @@ import { seedAssets } from "../db/seed-data";
 import { unknownAssetCode } from "../app/_lib/qr-code";
 
 const root = path.resolve(import.meta.dirname, "..");
-const qrDir = path.join(root, "demo-files", "qr");
-const unknownFile = path.join(root, "demo-files", "qr-unknown-asset.png");
+const qrDir = path.join(root, "public", "demo-files", "qr");
+const unknownFile = path.join(root, "public", "demo-files", "qr-unknown-asset.png");
 
 const options: QRCode.QRCodeToFileOptions = {
   type: "png",

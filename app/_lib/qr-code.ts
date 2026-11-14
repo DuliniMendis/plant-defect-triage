@@ -3,7 +3,7 @@
 // The decoder itself is in qr-decode.ts, loaded only when a file is uploaded so
 // the fleet page does not download it up front.
 
-/** The code in demo-files/qr-unknown-asset.png: an ID no seeded asset has. */
+/** The code in public/demo-files/qr-unknown-asset.png: an ID no seeded asset has. */
 export const unknownAssetCode = "ZZ-999";
 
 export type QrLookup =

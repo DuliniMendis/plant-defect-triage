@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useId,
@@ -85,6 +86,16 @@ export function QrUpload({
           <p className="font-medium">Have the asset&apos;s QR code?</p>
           <p id={`${id}-hint`} className="text-sm text-text-muted">
             Upload a saved image of it to open the asset.
+          </p>
+          <p className="text-sm text-text-muted">
+            No QR code to hand?{" "}
+            <Link
+              href="/test-files"
+              className="font-medium text-text underline underline-offset-2 hover:decoration-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              Download a test QR code
+            </Link>
+            .
           </p>
         </div>
         <label

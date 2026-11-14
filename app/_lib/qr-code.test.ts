@@ -43,8 +43,8 @@ describe("lookUpQrFile", () => {
 describe("saved QR code images (R3)", () => {
   const root = path.resolve(import.meta.dirname, "../..");
 
-  test("demo-files/qr has exactly one PNG per seeded asset", async () => {
-    const files = (await readdir(path.join(root, "demo-files", "qr"))).filter((f) =>
+  test("public/demo-files/qr has exactly one PNG per seeded asset", async () => {
+    const files = (await readdir(path.join(root, "public", "demo-files", "qr"))).filter((f) =>
       f.endsWith(".png"),
     );
     expect(files.sort()).toEqual(seedAssets.map((a) => `${a.id}.png`).sort());

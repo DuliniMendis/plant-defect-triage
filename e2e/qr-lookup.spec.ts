@@ -5,7 +5,7 @@ import { seedAssets } from "../db/seed-data";
 // QR code lookup (R2) with the saved QR images (R3). Needs a seeded database
 // (`pnpm db:seed`) and the images from `pnpm qr:generate`. Runs at desktop and
 // 768px widths.
-const demoFiles = path.join(__dirname, "..", "demo-files");
+const demoFiles = path.join(__dirname, "..", "public", "demo-files");
 const qrFile = (id: string) => path.join(demoFiles, "qr", `${id}.png`);
 
 // The upload is enabled once the page has hydrated.
