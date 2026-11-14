@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("every screen shows the app name and the disclaimer", async ({ page }) => {
-  for (const path of ["/", "/asset/EX-014"]) {
+  for (const path of ["/", "/asset/EX-014", "/test-files"]) {
     await page.goto(path);
     await expect(
       page.getByRole("link", { name: "Plant Defect Triage" }),

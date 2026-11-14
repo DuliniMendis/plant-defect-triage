@@ -77,3 +77,11 @@ test("shows that it is reading while the image is decoded", async () => {
   await done;
   expect(await screen.findByRole("alert")).toBeInTheDocument();
 });
+
+test("points to the test files for anyone without a QR code", () => {
+  setup({ kind: "no-code" });
+  expect(screen.getByRole("link", { name: "Download a test QR code" })).toHaveAttribute(
+    "href",
+    "/test-files",
+  );
+});

@@ -2,9 +2,9 @@ import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 
 // Defect capture (R7, R9, R10, R11; notes required, photos optional) on the asset profile, with the sample
-// photos from demo-files. Needs a seeded database (`pnpm db:seed`).
+// photos from public/demo-files. Needs a seeded database (`pnpm db:seed`).
 const photo = (name: string) =>
-  path.join(__dirname, "..", "demo-files", "photos", name);
+  path.join(__dirname, "..", "public", "demo-files", "photos", name);
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/asset/EX-014");

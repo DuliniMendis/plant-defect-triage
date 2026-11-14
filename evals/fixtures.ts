@@ -10,7 +10,7 @@ import type { CasePhoto } from "./cases";
 // in the same shape and order the database returns them, so the eval needs no
 // database and always sees the clean starting state.
 
-export const PHOTO_DIR = path.join(process.cwd(), "demo-files", "photos");
+export const PHOTO_DIR = path.join(process.cwd(), "public", "demo-files", "photos");
 
 export function seededAsset(id: string): Asset {
   const a = seedAssets.find((s) => s.id === id);

@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+const navLink =
+  "text-sm font-medium text-ink-muted hover:text-accent focus-visible:outline-2 focus-visible:outline-accent";
+
 export function SiteHeader() {
   return (
     <header className="border-b-4 border-accent bg-ink">
@@ -8,11 +11,11 @@ export function SiteHeader() {
           Plant Defect Triage
         </Link>
         <span className="text-sm text-ink-muted">Concept demo</span>
-        <nav aria-label="Main" className="ml-auto">
-          <Link
-            href="/insights"
-            className="text-sm font-medium text-ink-muted hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
-          >
+        <nav aria-label="Main" className="ml-auto flex gap-5">
+          <Link href="/test-files" className={navLink}>
+            Test files
+          </Link>
+          <Link href="/insights" className={navLink}>
             Insights
           </Link>
         </nav>
